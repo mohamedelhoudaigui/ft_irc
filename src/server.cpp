@@ -69,8 +69,6 @@ void    Server::server_action()
             perror("epoll_ctl user");
             close(user_fd);
         }
-
-        std::cout << "new user is connected" << std::endl;
     }
 }
 
@@ -95,10 +93,7 @@ void    Server::epoll_loop() {
             if (events[i].data.fd == server_fd)
                 server_action();
             else
-            {
-                std::cout << "event invoced !" << std::endl;
                 user_action(events[i]);
-            }
         }
     }
 }

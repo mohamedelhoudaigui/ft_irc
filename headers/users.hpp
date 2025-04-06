@@ -2,13 +2,15 @@
 #define USERS_HPP
 
 #include <string>
-#include <type_traits>
 #include <vector>
 #include <sys/epoll.h>
 #include <stdexcept>
 #include <algorithm>
 #include <cstring>
 #include <iostream>
+#include <stdio.h>
+#include <errno.h>
+#include <cerrno>
 
 #include "user.hpp"
 
@@ -23,12 +25,13 @@ class Users
 		~Users();
 
 		void			process(struct epoll_event event);
+		void			set_epoll_fd(int _epoll_fd);
+		void    		parse_command(const User & user, std::string buffer);
+
 		void			add_user(int fd);
-		void			remove_user(int fd, struct epoll_event event);
+		void			remove_user(int fd);
 		const User &	get_user(int fd);
 		bool			check_user(int fd);	
-
-		void			set_epoll_fd(int _epoll_fd);
 		
 	private:
 		std::vector<User>	users;

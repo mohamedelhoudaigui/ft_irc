@@ -17,7 +17,7 @@ const Users & Users::operator=(const Users & other) {
 }
 
 Users::~Users() {
-	for (int i = 0 ; i < this->users.size(); ++i)
+	for (size_t i = 0 ; i < this->users.size(); ++i)
     {
         close(users[i].get_fd());
     }
@@ -42,7 +42,6 @@ void	Users::process(struct epoll_event event) {
         memset(buffer, 0, BUFFER_SIZE);
     
         ssize_t bytes_recv = recv(user_fd, buffer, BUFFER_SIZE, 0);
-        std::cout << bytes_recv << std::endl;
     
         switch (bytes_recv)
         {
@@ -51,33 +50,44 @@ void	Users::process(struct epoll_event event) {
                     break;
                 } else {
                     perror("recv");
-                    remove_user(user_fd, event);
+                    remove_user(user_fd);
                     break;
                 }
     
             case 0:
-                remove_user(user_fd, event);
+                remove_user(user_fd);
                 break;
     
             default:
                 // parse user command here :
+                parse_command(user, std::string(buffer));
+                std::cout << buffer;
 
-                ssize_t bytes_sent = send(user_fd, "ping\n", 6, 0);
+                ssize_t bytes_sent = send(user_fd, "ack!\n", 6, 0);
     
                 if (bytes_sent == -1) {
                     perror("send");
-                    remove_user(user_fd, event);
+                    remove_user(user_fd);
                     break;
                 }
 
-                std::cout << buffer;
         }
     }
 }
 
+// parsing command :
+void    Users::parse_command(const User & user, std::string buffer)
+{
+    (void)user;
+    (void)buffer;
+    // not implemented yet
+}
+
+
+// operations on users vector :
 
 bool    Users::check_user(int fd) {
-    for (int i = 0; i < users.size(); ++i)
+    for (size_t i = 0; i < users.size(); ++i)
     {
         if (users[i].get_fd() == fd)
             return (true);
@@ -86,7 +96,7 @@ bool    Users::check_user(int fd) {
 }
 
 const User &    Users::get_user(int fd) { // use check user before calling this !!
-    for (int i = 0; i < users.size(); ++i)
+    for (size_t i = 0; i < users.size(); ++i)
     {
         if (users[i].get_fd() == fd)
             return (users[i]);
@@ -102,10 +112,10 @@ void    Users::add_user(int fd) {
     }
 }
 
-void    Users::remove_user(int fd, struct epoll_event event) {
+void    Users::remove_user(int fd) {
     epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
     close(fd);
     const User & user = get_user(fd);
     users.erase(find(users.begin(), users.end(), user));
-    std::cout << "user removed" << std::endl;
+    // std::cout << "user removed" << std::endl;
 }

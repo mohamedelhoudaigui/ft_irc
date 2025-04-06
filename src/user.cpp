@@ -2,11 +2,12 @@
 
 // canonical form :
 
+User::User(): fd(-1), ip_address("") {}
 
-User::User() {}
-
-User::User(int _fd): fd(_fd) {}
-
+User::User(int _fd) {
+    this->fd = _fd;
+    ip_address = get_socket_address();
+}
 
 User::User(const User & other) {
 	*this = other;
@@ -30,12 +31,11 @@ User::~User() {}
 
 // user methdos:
 
-
 int	User::get_fd() const {
 	return (fd);
 }
 
-void	User::get_socket_address() const {
+std::string	User::get_socket_address() const {
     struct sockaddr_in addr;
     socklen_t addr_size = sizeof(addr);
     
@@ -43,13 +43,7 @@ void	User::get_socket_address() const {
     if (getsockname(fd, (struct sockaddr *)&addr, &addr_size) == 0) {
         char local_ip[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &addr.sin_addr, local_ip, INET_ADDRSTRLEN);
-        printf("Local IP: %s, Port: %d\n", local_ip, ntohs(addr.sin_port));
+        return (std::string(local_ip));
     }
-    
-    // Get peer (remote) address - for connected sockets
-    if (getpeername(fd, (struct sockaddr *)&addr, &addr_size) == 0) {
-        char remote_ip[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &addr.sin_addr, remote_ip, INET_ADDRSTRLEN);
-        printf("Remote IP: %s, Port: %d\n", remote_ip, ntohs(addr.sin_port));
-    }
+    return ("");
 }

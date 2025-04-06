@@ -4,8 +4,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <stdio.h>
 #include <unistd.h>
+#include <string>
+
 
 class User
 {
@@ -17,12 +18,16 @@ class User
 		bool operator==(const User & other);
 		~User();
 
-		void	get_socket_address() const;
-		int		get_fd() const;
+		std::string	get_socket_address() const;
+		int			get_fd() const;
 
 	private:
-		int		fd;
-		char*	ip_address;
+		int			fd;
+		std::string	ip_address;
+
+		bool			auth;
+		std::string 	user_name;
+		std::string 	nick_name;
 
 };
 

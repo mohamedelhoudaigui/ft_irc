@@ -23,12 +23,14 @@
 class Server
 {
 	public:
+
 		// canonical form:
 		Server();
 		Server(int port, std::string password);
 		Server(const Server & other);
 		const Server & operator=(const Server & other);
 		~Server();
+
 		// server methods:
 		void	set_nonblocking(int fd);
 		void	epoll_loop();
@@ -37,17 +39,18 @@ class Server
 		void	start();
 
 	private:
-		// epoll data:
-		int epoll_fd;
-		int	server_fd;
-		struct sockaddr_in addr;
-		struct epoll_event event;
-		struct epoll_event events[MAX_EVENTS];
-		// irc server data:
-		int port;
-		std::string password;
 
-		Users	users_management;
+		// epoll data:
+		int 				epoll_fd;
+		int					server_fd;
+		struct sockaddr_in	addr;
+		struct epoll_event	event;
+		struct epoll_event	events[MAX_EVENTS];
+
+		// irc server data:
+		int 				port;
+		std::string 		password;
+		Users				users_management;
 };
 
 #endif

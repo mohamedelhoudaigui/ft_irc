@@ -1,10 +1,12 @@
 SRCS = ./src/server.cpp \
 		./src/users.cpp \
 		./src/user.cpp \
+		./src/utils.cpp \
 		./src/main.cpp
 
 HEADERS = ./headers/server.hpp \
 			./headers/users.hpp \
+			./headers/utils.hpp \
 			./headers/user.hpp
 
 OBJ_DIR = objects
@@ -15,7 +17,7 @@ CC = c++
 
 RM = rm -f
 
-FLAGS = -std=c++98 -Wall -Wextra -Werror -g
+CFLAGS = -std=c++98 -Wall -Wextra -Werror -O3 -g
 
 NAME = ircserv
 
