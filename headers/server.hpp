@@ -15,7 +15,7 @@
 #include <iostream>
 #include <errno.h>
 
-#include "users.hpp"
+#include "user_management.hpp"
 
 #define MAX_EVENTS 10
 
@@ -50,7 +50,7 @@ class Server
 		// irc server data:
 		int 				port;
 		std::string 		password;
-		Users				users_management;
+		UserManag				UserManag_management;
 };
 
 #endif

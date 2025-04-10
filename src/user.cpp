@@ -17,6 +17,7 @@ const User & User::operator=(const User & other) {
 	if (this != &other) {
 		this->fd = other.fd;
 		this->ip_address = other.ip_address;
+        this->user_buffer = other.user_buffer;
 	}
 	return (*this);
 }
@@ -46,4 +47,12 @@ std::string	User::get_socket_address() const {
         return (std::string(local_ip));
     }
     return ("");
+}
+
+void		User::add_to_buffer(char* buffer) {
+    this->user_buffer.append(buffer);
+}
+
+std::string	User::get_buffer() const {
+    return (this->user_buffer);
 }

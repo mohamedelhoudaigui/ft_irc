@@ -1,12 +1,14 @@
 SRCS = ./src/server.cpp \
-		./src/users.cpp \
+		./src/user_management.cpp \
 		./src/user.cpp \
 		./src/utils.cpp \
+		./src/parser.cpp \
 		./src/main.cpp
 
 HEADERS = ./headers/server.hpp \
-			./headers/users.hpp \
+			./headers/user_management.hpp \
 			./headers/utils.hpp \
+			./headers/parser.hpp \
 			./headers/user.hpp
 
 OBJ_DIR = objects

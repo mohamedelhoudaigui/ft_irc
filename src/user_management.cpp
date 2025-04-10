@@ -1,40 +1,41 @@
-#include "../headers/users.hpp"
-#include <cstring>
+#include "../headers/user_management.hpp"
 
 // canonical form :
 
-Users::Users() {}
+UserManag::UserManag() {}
 
-Users::Users(const Users & other) {
+UserManag::UserManag(const UserManag & other) {
 	*this = other;
 }
 
-const Users & Users::operator=(const Users & other) {
-	if (this != &other) {
+const UserManag & UserManag::operator=(const UserManag & other) {
+	if (this != &other)
+    {
 		this->users = other.users;
 	}
 	return (*this);
 }
 
-Users::~Users() {
+UserManag::~UserManag()
+{
 	for (size_t i = 0 ; i < this->users.size(); ++i)
     {
         close(users[i].get_fd());
     }
 }
 
-// users methods:
+// UserManag methods:
 
-void    Users::set_epoll_fd(int _epoll_fd) {
+void    UserManag::set_epoll_fd(int _epoll_fd) {
     epoll_fd = _epoll_fd;
 }
 
-void	Users::process(struct epoll_event event) {
+void	UserManag::process(struct epoll_event event) {
 
     int user_fd = event.data.fd;
 
     add_user(user_fd);
-    const User & user = get_user(user_fd);
+    User & user = get_user(user_fd);
 
     if (event.events == EPOLLIN)
     {
@@ -59,34 +60,29 @@ void	Users::process(struct epoll_event event) {
                 break;
     
             default:
-                // parse user command here :
-                parse_command(user, std::string(buffer));
-                std::cout << buffer;
-
-                ssize_t bytes_sent = send(user_fd, "ack!\n", 6, 0);
-    
-                if (bytes_sent == -1) {
-                    perror("send");
-                    remove_user(user_fd);
-                    break;
-                }
-
+                user.add_to_buffer(buffer);
+                process_buffer(user);
+                break ;
         }
     }
 }
 
+
+
 // parsing command :
-void    Users::parse_command(const User & user, std::string buffer)
+void    UserManag::process_buffer(User & user)
 {
-    (void)user;
-    (void)buffer;
-    // not implemented yet
+    parser.parse(user);
+    if (parser.replay(user) == false)
+    {
+        remove_user(user.get_fd());
+    }
 }
 
 
-// operations on users vector :
+// operations on UserManag vector :
 
-bool    Users::check_user(int fd) {
+bool    UserManag::check_user(int fd) {
     for (size_t i = 0; i < users.size(); ++i)
     {
         if (users[i].get_fd() == fd)
@@ -95,7 +91,7 @@ bool    Users::check_user(int fd) {
     return (false);
 }
 
-const User &    Users::get_user(int fd) { // use check user before calling this !!
+User &    UserManag::get_user(int fd) { // use check user before calling this !!
     for (size_t i = 0; i < users.size(); ++i)
     {
         if (users[i].get_fd() == fd)
@@ -104,7 +100,7 @@ const User &    Users::get_user(int fd) { // use check user before calling this 
     throw std::runtime_error("user not found");
 }
 
-void    Users::add_user(int fd) {
+void    UserManag::add_user(int fd) {
     if (!check_user(fd)) {
         User new_user(fd);
         new_user.get_socket_address();
@@ -112,7 +108,7 @@ void    Users::add_user(int fd) {
     }
 }
 
-void    Users::remove_user(int fd) {
+void    UserManag::remove_user(int fd) {
     epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
     close(fd);
     const User & user = get_user(fd);

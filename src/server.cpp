@@ -25,6 +25,12 @@ const Server & Server::operator=(const Server & other)
 	return (*this);
 }
 
+
+Server::Server(const Server & other)
+{
+    *this = other;
+}
+
 Server::~Server()
 {
 	close(epoll_fd);
@@ -74,7 +80,7 @@ void    Server::server_action()
 
 void    Server::user_action(struct epoll_event event)
 {
-    users_management.process(event);
+    UserManag_management.process(event);
 }
 
 void    Server::epoll_loop() {
@@ -137,7 +143,7 @@ void	Server::start() {
         close(server_fd);
         exit(EXIT_FAILURE);
     }
-    users_management.set_epoll_fd(epoll_fd);
+    UserManag_management.set_epoll_fd(epoll_fd);
 
     // add server socker to epoll instance
 	event.events = EPOLLIN | EPOLLET;
