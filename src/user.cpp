@@ -36,23 +36,37 @@ int	User::get_fd() const {
 	return (fd);
 }
 
-std::string	User::get_socket_address() const {
+std::string	User::get_socket_address() const
+{
     struct sockaddr_in addr;
     socklen_t addr_size = sizeof(addr);
     
-    // Get local address
     if (getsockname(fd, (struct sockaddr *)&addr, &addr_size) == 0) {
         char local_ip[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &addr.sin_addr, local_ip, INET_ADDRSTRLEN);
         return (std::string(local_ip));
     }
-    return ("");
+    return ("error getting address");
 }
 
-void		User::add_to_buffer(char* buffer) {
-    this->user_buffer.append(buffer);
+void		User::add_to_buffer(char* buffer)
+{
+    std::string new_data(buffer);
+
+    if (user_buffer.size() + new_data.size() > BUFFER_SIZE)
+        user_buffer.clear();
+
+    user_buffer.append(buffer);
+
+    if (user_buffer.size() > BUFFER_SIZE)
+        user_buffer = user_buffer.substr(user_buffer.size() - BUFFER_SIZE);
 }
 
-std::string	User::get_buffer() const {
+std::string &	User::get_buffer()
+{
     return (this->user_buffer);
+}
+
+void    User::clear_buffer() {
+    this->user_buffer.clear();
 }

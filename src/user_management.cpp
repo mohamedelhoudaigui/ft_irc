@@ -67,13 +67,10 @@ void	UserManag::process(struct epoll_event event) {
     }
 }
 
-
-
 // parsing command :
 void    UserManag::process_buffer(User & user)
 {
-    parser.parse(user);
-    if (parser.replay(user) == false)
+    if (parser.parse(user) == false)
     {
         remove_user(user.get_fd());
     }
