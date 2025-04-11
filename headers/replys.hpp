@@ -7,7 +7,6 @@
 //Errors :
 
 #define ERR_ALREADYREGISTERED(target)PREFIX "462 " + target + " :You may not reregister" POSTFIX 
-
 #define ERR_NICKNAMEINUSE(target)PREFIX "433 " + target + " :Nickname is already in use" POSTFIX 
 #define ERR_NEEDMOREPARAMS(command)PREFIX "461 " + command + " :Not enough parameters" POSTFIX  
 #define ERR_UNKNOWNCOMMAND(command)PREFIX "421 " + command + " :Unknown command" POSTFIX 

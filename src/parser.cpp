@@ -91,6 +91,18 @@ void	Parser::redirect_cmd(User & user, cmd_line c)
 		else // password is correct
 			user.set_auth(true);
 	}
+	else if (cmd == "NICK")
+	{
+		// not implemented yet
+	}
+	else if (cmd == "USER")
+	{
+		// not implemented yet
+	}
+	else
+	{
+		user.send_reply(ERR_UNKNOWNCOMMAND(cmd));
+	}
 }
 
 
