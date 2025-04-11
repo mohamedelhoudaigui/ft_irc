@@ -22,23 +22,26 @@ class UserManag
 {
 	public:
 		UserManag();
+		UserManag(std::string password);
 		UserManag(const UserManag & other);
 		const UserManag & operator=(const UserManag & other);
 		~UserManag();
 
 		void			process(struct epoll_event event);
 		void			set_epoll_fd(int _epoll_fd);
-		void    		process_buffer(User & user);
+		void    		process_buffer(User & user, char* buffer);
 
 		void			add_user(int fd);
 		void			remove_user(int fd);
 		User &			get_user(int fd);
-		bool			check_user(int fd);	
+		bool			check_user(int fd);
 		
 	private:
 		std::vector<User>						users;
 		int										epoll_fd;
+		std::string								server_password;
 		Parser									parser;
+
 };
 
 

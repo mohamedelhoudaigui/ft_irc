@@ -2,7 +2,9 @@
 
 // canonical form :
 
-UserManag::UserManag() {}
+UserManag::UserManag(): server_password("") {}
+
+UserManag::UserManag(std::string password): server_password(password), parser(password) {}
 
 UserManag::UserManag(const UserManag & other) {
 	*this = other;
@@ -60,20 +62,32 @@ void	UserManag::process(struct epoll_event event) {
                 break;
     
             default:
-                user.add_to_buffer(buffer);
-                process_buffer(user);
+                process_buffer(user, buffer);
                 break ;
         }
     }
 }
 
 // parsing command :
-void    UserManag::process_buffer(User & user)
+void UserManag::process_buffer(User &user, char* buffer)
 {
-    if (parser.parse(user) == false)
+    std::string new_data(buffer);
+
+    if (new_data.size() > BUFFER_SIZE)
+        new_data = new_data.substr(new_data.size() - BUFFER_SIZE);
+
+    if (user.get_buffer().size() + new_data.size() > BUFFER_SIZE)
     {
-        remove_user(user.get_fd());
+        size_t excess = (user.get_buffer().size() + new_data.size()) - BUFFER_SIZE;
+        if (excess >= user.get_buffer().size())
+            user.clear_buffer();
+        else
+            user.set_buffer(user.get_buffer().substr(excess));
     }
+
+    user.add_to_buffer(buffer);
+
+    parser.parse(user);
 }
 
 

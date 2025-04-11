@@ -2,12 +2,24 @@
 
 // canonical form :
 
-User::User(): fd(-1), ip_address("") {}
+User::User():
+                    fd(-1),
+                    ip_address(""),
+                    auth(false),
+                    user_name("*"),
+                    nick_name("*"),
+                    purge(false)
+{}
 
-User::User(int _fd) {
-    this->fd = _fd;
-    ip_address = get_socket_address();
-}
+User::User(int _fd):
+                    fd(_fd),
+                    ip_address(get_socket_address()),
+                    auth(false),
+                    user_name("*"),
+                    nick_name("*"),
+                    purge(false)
+             
+{}
 
 User::User(const User & other) {
 	*this = other;
@@ -17,8 +29,13 @@ const User & User::operator=(const User & other) {
 	if (this != &other) {
 		this->fd = other.fd;
 		this->ip_address = other.ip_address;
+        this->auth = other.auth;
+        this->user_name = other.user_name;
+        this->nick_name = other.nick_name;
         this->user_buffer = other.user_buffer;
+        this->purge = other.purge;
 	}
+
 	return (*this);
 }
 
@@ -51,15 +68,12 @@ std::string	User::get_socket_address() const
 
 void		User::add_to_buffer(char* buffer)
 {
-    std::string new_data(buffer);
-
-    if (user_buffer.size() + new_data.size() > BUFFER_SIZE)
-        user_buffer.clear();
-
     user_buffer.append(buffer);
+}
 
-    if (user_buffer.size() > BUFFER_SIZE)
-        user_buffer = user_buffer.substr(user_buffer.size() - BUFFER_SIZE);
+void			User::set_buffer(std::string buffer)
+{
+    this->user_buffer = buffer;
 }
 
 std::string &	User::get_buffer()
@@ -67,6 +81,47 @@ std::string &	User::get_buffer()
     return (this->user_buffer);
 }
 
-void    User::clear_buffer() {
+void    User::clear_buffer()
+{
     this->user_buffer.clear();
+}
+
+
+bool    User::get_purge()
+{
+    return (purge);
+}
+
+void    User::set_purge(bool s)
+{
+    this->purge = s;
+}
+
+
+void        User::send_reply(std::string reply)
+{
+    clear_buffer();
+    
+    ssize_t bytes_sent = send(fd, reply.c_str(), reply.size(), 0);
+
+    if (bytes_sent == -1)
+        perror("send");
+}
+
+std::string User::get_nick_name() {
+    return (this->nick_name);
+}
+
+void    User::set_nick_name(std::string nick) {
+    nick_name = nick;
+}
+
+bool    User::get_auth()
+{
+    return (this->auth);
+}
+
+void    User::set_auth(bool a)
+{
+    this->auth = a;
 }

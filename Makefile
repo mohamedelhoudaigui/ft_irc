@@ -9,6 +9,7 @@ HEADERS = ./headers/server.hpp \
 			./headers/user_management.hpp \
 			./headers/utils.hpp \
 			./headers/parser.hpp \
+			./headers/replys.hpp \
 			./headers/user.hpp
 
 OBJ_DIR = objects

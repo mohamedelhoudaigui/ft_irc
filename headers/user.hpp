@@ -7,9 +7,11 @@
 #include <unistd.h>
 #include <string>
 #include <iostream>
+#include <stdio.h>
+
+#include "replys.hpp"
 
 #define BUFFER_SIZE 512
-
 
 class User
 {
@@ -23,19 +25,33 @@ class User
 
 		std::string		get_socket_address() const;
 		int				get_fd() const;
+
 		void			add_to_buffer(char* buffer);
-		std::string &	get_buffer();
 		void			clear_buffer();
+		std::string &	get_buffer();
+		void			set_buffer(std::string buffer);
+
+		bool			get_purge();
+		void			set_purge(bool s);
 
 		
+		std::string		get_nick_name();
+		void			set_nick_name(std::string nick);
+
+		bool			get_auth();
+		void			set_auth(bool a);
+
+		void			send_reply(std::string reply);
+		
 		private:
-			int			fd;
-			std::string	ip_address;
+			int				fd;
+			std::string		ip_address;
 			
 			bool			auth;
 			std::string 	user_name;
 			std::string 	nick_name;
 			std::string		user_buffer;
+			bool			purge;
 
 };
 

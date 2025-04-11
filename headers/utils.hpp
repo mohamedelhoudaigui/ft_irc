@@ -8,6 +8,7 @@
 
 #define MAX_PORT 65535
 
-int	parse_port(std::string port);
+int         parse_port(std::string port);
+std::string convert_to_lower(std::string s);
 
 #endif

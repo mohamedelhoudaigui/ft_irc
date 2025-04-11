@@ -1,2 +1,2 @@
-netcat CTRL + D issue :
-https://stackoverflow.com/questions/10981790/unix-epoll-catch-ctrld-and-ctrlc-in-server
+in the rfc nick name ALICE = alice , irc parsing should be case insensitive
+https://modern.ircdocs.horse/#message-format

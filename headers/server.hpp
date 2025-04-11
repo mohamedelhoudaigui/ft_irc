@@ -50,7 +50,7 @@ class Server
 		// irc server data:
 		int 				port;
 		std::string 		password;
-		UserManag				UserManag_management;
+		UserManag			user_management;
 };
 
 #endif

@@ -4,7 +4,7 @@
 
 Server::Server() {}
 
-Server::Server(int _port, std::string _password): port(_port), password(_password) {}
+Server::Server(int _port, std::string _password): port(_port), password(_password), user_management(_password) {}
 
 const Server & Server::operator=(const Server & other)
 {
@@ -80,7 +80,7 @@ void    Server::server_action()
 
 void    Server::user_action(struct epoll_event event)
 {
-    UserManag_management.process(event);
+    user_management.process(event);
 }
 
 void    Server::epoll_loop() {
@@ -143,7 +143,7 @@ void	Server::start() {
         close(server_fd);
         exit(EXIT_FAILURE);
     }
-    UserManag_management.set_epoll_fd(epoll_fd);
+    user_management.set_epoll_fd(epoll_fd);
 
     // add server socker to epoll instance
 	event.events = EPOLLIN | EPOLLET;

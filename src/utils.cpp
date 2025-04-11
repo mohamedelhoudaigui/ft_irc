@@ -28,3 +28,14 @@ int	parse_port(std::string port)
 	std::cerr << "invalid port value" << std::endl;
 	exit(1);
 }
+
+
+
+std::string	convert_to_lower(std::string s)
+{
+	for (size_t i = 0; i <s.size(); ++i)
+	{
+		s[i] = tolower(s[i]);
+	}
+	return (s);
+}
