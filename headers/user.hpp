@@ -23,8 +23,8 @@ class User
 		bool operator==(const User & other);
 		~User();
 
-		std::string		get_socket_address() const;
-		int				get_fd() const;
+		std::string		get_socket_address();
+		int				get_fd();
 
 		void			add_to_buffer(char* buffer);
 		void			clear_buffer();
@@ -38,6 +38,12 @@ class User
 		std::string		get_nick_name();
 		void			set_nick_name(std::string nick);
 
+		std::string		get_real_name();
+		void			set_real_name(std::string real);
+
+		std::string		get_user_name();
+		void			set_user_name(std::string username);
+
 		bool			get_auth();
 		void			set_auth(bool a);
 
@@ -49,6 +55,7 @@ class User
 			
 			bool			auth;
 			std::string 	user_name;
+			std::string		real_name;
 			std::string 	nick_name;
 			std::string		user_buffer;
 			bool			purge;

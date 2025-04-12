@@ -6,7 +6,8 @@ User::User():
                     fd(-1),
                     ip_address(""),
                     auth(false),
-                    user_name("*"),
+                    user_name(""),
+                    real_name(""),
                     nick_name("*"),
                     purge(false)
 {}
@@ -15,22 +16,26 @@ User::User(int _fd):
                     fd(_fd),
                     ip_address(get_socket_address()),
                     auth(false),
-                    user_name("*"),
+                    user_name(""),
+                    real_name(""),
                     nick_name("*"),
                     purge(false)
              
 {}
 
-User::User(const User & other) {
+User::User(const User & other)
+{
 	*this = other;
 }
 
-const User & User::operator=(const User & other) {
+const User & User::operator=(const User & other)
+{
 	if (this != &other) {
 		this->fd = other.fd;
 		this->ip_address = other.ip_address;
         this->auth = other.auth;
         this->user_name = other.user_name;
+        this->real_name = other.real_name;
         this->nick_name = other.nick_name;
         this->user_buffer = other.user_buffer;
         this->purge = other.purge;
@@ -39,7 +44,8 @@ const User & User::operator=(const User & other) {
 	return (*this);
 }
 
-bool User::operator==(const User & other) {
+bool User::operator==(const User & other)
+{
     if (this->fd == other.fd)
         return true;
     return false;
@@ -49,11 +55,17 @@ User::~User() {}
 
 // user methdos:
 
-int	User::get_fd() const {
-	return (fd);
+void        User::send_reply(std::string reply)
+{
+    clear_buffer();
+    
+    ssize_t bytes_sent = send(fd, reply.c_str(), reply.size(), 0);
+
+    if (bytes_sent == -1)
+        perror("send");
 }
 
-std::string	User::get_socket_address() const
+std::string	User::get_socket_address()
 {
     struct sockaddr_in addr;
     socklen_t addr_size = sizeof(addr);
@@ -64,6 +76,11 @@ std::string	User::get_socket_address() const
         return (std::string(local_ip));
     }
     return ("error getting address");
+}
+
+int	User::get_fd()
+{
+    return (fd);
 }
 
 void		User::add_to_buffer(char* buffer)
@@ -97,23 +114,34 @@ void    User::set_purge(bool s)
     this->purge = s;
 }
 
-
-void        User::send_reply(std::string reply)
+std::string User::get_nick_name()
 {
-    clear_buffer();
-    
-    ssize_t bytes_sent = send(fd, reply.c_str(), reply.size(), 0);
-
-    if (bytes_sent == -1)
-        perror("send");
-}
-
-std::string User::get_nick_name() {
     return (this->nick_name);
 }
 
-void    User::set_nick_name(std::string nick) {
-    nick_name = nick;
+void    User::set_nick_name(std::string nick)
+{
+    this->nick_name = nick;
+}
+
+std::string User::get_real_name()
+{
+    return (this->real_name);
+}
+
+void    User::set_real_name(std::string real)
+{
+    this->real_name = real;
+}
+
+std::string User::get_user_name()
+{
+    return (this->user_name);
+}
+
+void    User::set_user_name(std::string username)
+{
+    this->user_name = username;
 }
 
 bool    User::get_auth()
