@@ -4,7 +4,12 @@
 
 Server::Server() {}
 
-Server::Server(int _port, std::string _password): port(_port), password(_password), user_management(_password) {}
+Server::Server(int _port, std::string _password):
+port(_port),
+password(_password),
+user_management(),
+parser(_password)
+{}
 
 const Server & Server::operator=(const Server & other)
 {
@@ -20,6 +25,7 @@ const Server & Server::operator=(const Server & other)
 		}
 		this->port = other.port;
 		this->password = other.password;
+        this->parser = other.parser;
 	}
 
 	return (*this);
@@ -80,7 +86,7 @@ void    Server::server_action()
 
 void    Server::user_action(struct epoll_event event)
 {
-    user_management.process(event);
+    user_management.process(event, parser);
 }
 
 void    Server::epoll_loop() {

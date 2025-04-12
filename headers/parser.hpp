@@ -9,6 +9,9 @@
 
 #include "user.hpp"
 #include "replys.hpp"
+#include "utils.hpp"
+
+class UserManag;
 
 typedef struct cmd_line
 {
@@ -28,9 +31,10 @@ class Parser
         const Parser & operator=(const Parser & other);
         ~Parser();
 
-        void    parse(User & user);
-        void    redirect_cmd(User & user, cmd_line c);
+        void    parse(User & user, UserManag & user_manag);
+        void    redirect_cmd(User & user, cmd_line c, UserManag & user_manag);
         bool    isEnded(User & user);
+
 
     private:
         std::string server_password;

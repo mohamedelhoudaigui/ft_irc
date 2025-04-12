@@ -1,4 +1,5 @@
 #include "../headers/parser.hpp"
+#include "../headers/user_management.hpp"
 
 
 Parser::Parser(): server_password("") {}
@@ -22,7 +23,7 @@ Parser::~Parser() {}
 //-------------------------------
 
 
-void    Parser::parse(User & user)
+void    Parser::parse(User & user, UserManag & user_manag)
 {
 	if (!isEnded(user)) // here we still buffer (we need \r\n)
 	{
@@ -61,10 +62,10 @@ void    Parser::parse(User & user)
 	}
 
 	std::cout << c;
-	redirect_cmd(user, c);
+	redirect_cmd(user, c, user_manag);
 }
 
-void	Parser::redirect_cmd(User & user, cmd_line c)
+void	Parser::redirect_cmd(User & user, cmd_line c, UserManag & user_manag)
 {
 	std::string&				cmd = c.cmd;
 	std::vector<std::string>&	args = c.args;
@@ -83,22 +84,42 @@ void	Parser::redirect_cmd(User & user, cmd_line c)
 		{
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("PASS")));
 		}
+
 		else if (args[0] != server_password) // password not correct
 		{
 			user.set_auth(false);
 			user.send_reply(ERR_PASSWDMISMATCH(user.get_nick_name()));
 		}
+
 		else // password is correct
 			user.set_auth(true);
 	}
+
 	else if (cmd == "NICK")
 	{
-		// not implemented yet
+		if (args.size() < 1)
+		{
+			user.send_reply(ERR_NONICKNAMEGIVEN(user.get_nick_name()));
+		}
+		else if (user_manag.check_nick_name(args[0]) == false)
+		{
+			user.send_reply(ERR_NICKNAMEINUSE(user.get_nick_name()));
+		}
+		else if (!valid_nick_name(args[0]))
+		{
+			user.send_reply(ERR_ERRONEUSNICKNAME(args[0]));
+		}
+		else
+		{
+			user.set_nick_name(args[0]);
+		}
 	}
+
 	else if (cmd == "USER")
 	{
 		// not implemented yet
 	}
+
 	else
 	{
 		user.send_reply(ERR_UNKNOWNCOMMAND(cmd));

@@ -2,9 +2,7 @@
 
 // canonical form :
 
-UserManag::UserManag(): server_password("") {}
-
-UserManag::UserManag(std::string password): server_password(password), parser(password) {}
+UserManag::UserManag() {}
 
 UserManag::UserManag(const UserManag & other) {
 	*this = other;
@@ -12,7 +10,8 @@ UserManag::UserManag(const UserManag & other) {
 
 const UserManag & UserManag::operator=(const UserManag & other) {
 	if (this != &other)
-    {
+	{
+		this->epoll_fd = other.epoll_fd;
 		this->users = other.users;
 	}
 	return (*this);
@@ -21,108 +20,116 @@ const UserManag & UserManag::operator=(const UserManag & other) {
 UserManag::~UserManag()
 {
 	for (size_t i = 0 ; i < this->users.size(); ++i)
-    {
-        close(users[i].get_fd());
-    }
+	{
+		close(users[i].get_fd());
+	}
 }
 
 // UserManag methods:
 
 void    UserManag::set_epoll_fd(int _epoll_fd) {
-    epoll_fd = _epoll_fd;
+	epoll_fd = _epoll_fd;
 }
 
-void	UserManag::process(struct epoll_event event) {
+void	UserManag::process(struct epoll_event event, Parser & parser) {
 
-    int user_fd = event.data.fd;
+	int user_fd = event.data.fd;
 
-    add_user(user_fd);
-    User & user = get_user(user_fd);
+	add_user(user_fd);
+	User & user = get_user(user_fd);
 
-    if (event.events == EPOLLIN)
-    {
-        char buffer[BUFFER_SIZE];
-        memset(buffer, 0, BUFFER_SIZE);
-    
-        ssize_t bytes_recv = recv(user_fd, buffer, BUFFER_SIZE, 0);
-    
-        switch (bytes_recv)
-        {
-            case -1:
-                if (errno == EAGAIN || errno == EWOULDBLOCK) { // no more data to read
-                    break;
-                } else {
-                    perror("recv");
-                    remove_user(user_fd);
-                    break;
-                }
-    
-            case 0:
-                remove_user(user_fd);
-                break;
-    
-            default:
-                process_buffer(user, buffer);
-                break ;
-        }
-    }
+	if (event.events == EPOLLIN)
+	{
+		char buffer[BUFFER_SIZE];
+		memset(buffer, 0, BUFFER_SIZE);
+	
+		ssize_t bytes_recv = recv(user_fd, buffer, BUFFER_SIZE, 0);
+	
+		switch (bytes_recv)
+		{
+			case -1:
+				if (errno == EAGAIN || errno == EWOULDBLOCK) { // no more data to read
+					break;
+				} else {
+					perror("recv");
+					remove_user(user_fd);
+					break;
+				}
+	
+			case 0:
+				remove_user(user_fd);
+				break;
+	
+			default:
+				process_buffer(user, buffer, parser);
+				break ;
+		}
+	}
 }
 
 // parsing command :
-void UserManag::process_buffer(User &user, char* buffer)
+void UserManag::process_buffer(User &user, char* buffer, Parser & parser)
 {
-    std::string new_data(buffer);
+	std::string new_data(buffer);
 
-    if (new_data.size() > BUFFER_SIZE)
-        new_data = new_data.substr(new_data.size() - BUFFER_SIZE);
+	if (new_data.size() > BUFFER_SIZE)
+		new_data = new_data.substr(new_data.size() - BUFFER_SIZE);
 
-    if (user.get_buffer().size() + new_data.size() > BUFFER_SIZE)
-    {
-        size_t excess = (user.get_buffer().size() + new_data.size()) - BUFFER_SIZE;
-        if (excess >= user.get_buffer().size())
-            user.clear_buffer();
-        else
-            user.set_buffer(user.get_buffer().substr(excess));
-    }
+	if (user.get_buffer().size() + new_data.size() > BUFFER_SIZE)
+	{
+		size_t excess = (user.get_buffer().size() + new_data.size()) - BUFFER_SIZE;
+		if (excess >= user.get_buffer().size())
+			user.clear_buffer();
+		else
+			user.set_buffer(user.get_buffer().substr(excess));
+	}
 
-    user.add_to_buffer(buffer);
+	user.add_to_buffer(buffer);
 
-    parser.parse(user);
+	parser.parse(user, *this);
 }
-
 
 // operations on UserManag vector :
 
 bool    UserManag::check_user(int fd) {
-    for (size_t i = 0; i < users.size(); ++i)
-    {
-        if (users[i].get_fd() == fd)
-            return (true);
-    }
-    return (false);
+	for (size_t i = 0; i < users.size(); ++i)
+	{
+		if (users[i].get_fd() == fd)
+			return (true);
+	}
+	return (false);
 }
 
 User &    UserManag::get_user(int fd) { // use check user before calling this !!
-    for (size_t i = 0; i < users.size(); ++i)
-    {
-        if (users[i].get_fd() == fd)
-            return (users[i]);
-    }
-    throw std::runtime_error("user not found");
+	for (size_t i = 0; i < users.size(); ++i)
+	{
+		if (users[i].get_fd() == fd)
+			return (users[i]);
+	}
+	throw std::runtime_error("user not found");
 }
 
 void    UserManag::add_user(int fd) {
-    if (!check_user(fd)) {
-        User new_user(fd);
-        new_user.get_socket_address();
-        users.push_back(new_user);
-    }
+	if (!check_user(fd)) {
+		User new_user(fd);
+		new_user.get_socket_address();
+		users.push_back(new_user);
+	}
 }
 
 void    UserManag::remove_user(int fd) {
-    epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
-    close(fd);
-    const User & user = get_user(fd);
-    users.erase(find(users.begin(), users.end(), user));
-    // std::cout << "user removed" << std::endl;
+	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+	close(fd);
+	const User & user = get_user(fd);
+	users.erase(find(users.begin(), users.end(), user));
+}
+
+bool    UserManag::check_nick_name(std::string nick)
+{
+	for (size_t i = 0; i < users.size(); ++i)
+	{
+		if (users[i].get_nick_name() == nick)
+			return (false);
+	}
+	return (true);
 }

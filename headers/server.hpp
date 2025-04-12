@@ -51,6 +51,7 @@ class Server
 		int 				port;
 		std::string 		password;
 		UserManag			user_management;
+		Parser				parser;
 };
 
 #endif

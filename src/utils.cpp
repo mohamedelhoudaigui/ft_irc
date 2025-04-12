@@ -29,8 +29,6 @@ int	parse_port(std::string port)
 	exit(1);
 }
 
-
-
 std::string	convert_to_lower(std::string s)
 {
 	for (size_t i = 0; i <s.size(); ++i)
@@ -38,4 +36,11 @@ std::string	convert_to_lower(std::string s)
 		s[i] = tolower(s[i]);
 	}
 	return (s);
+}
+
+bool	valid_nick_name(std::string s)
+{
+	if (s.size() < 1 || s[0] == ':' || s[0] == '#' || s.find(' ') != std::string::npos)
+		return (false);
+	return (true);
 }
