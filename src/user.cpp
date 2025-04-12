@@ -93,7 +93,7 @@ void			User::set_buffer(std::string buffer)
     this->user_buffer = buffer;
 }
 
-std::string &	User::get_buffer()
+std::string 	User::get_buffer()
 {
     return (this->user_buffer);
 }

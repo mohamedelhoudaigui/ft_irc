@@ -1,12 +1,10 @@
 SRCS = ./src/server.cpp \
-		./src/user_management.cpp \
+		./src/parser.cpp \
 		./src/user.cpp \
 		./src/utils.cpp \
-		./src/parser.cpp \
 		./src/main.cpp
 
 HEADERS = ./headers/server.hpp \
-			./headers/user_management.hpp \
 			./headers/utils.hpp \
 			./headers/parser.hpp \
 			./headers/replys.hpp \

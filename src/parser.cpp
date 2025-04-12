@@ -1,41 +1,185 @@
 #include "../headers/parser.hpp"
-#include "../headers/user_management.hpp"
 
+// canonical form :
 
 Parser::Parser(): server_password("") {}
 
 Parser::Parser(std::string password): server_password(password) {}
 
 const Parser & Parser::operator=(const Parser & other) {
-   if (this != &other) {
-		// nothing to copy
+   if (this != &other)
+   {
+		this->server_password = other.server_password;
+		this->users = other.users;
+		this->epoll_fd = other.epoll_fd;
    }
    return (*this); 
 }
 
-Parser::Parser(const Parser & other) {
+Parser::Parser(const Parser & other)
+{
 	*this = other;
 }
 
-Parser::~Parser() {}
+Parser::~Parser()
+{
+	close(epoll_fd);
+	for (size_t i = 0 ; i < this->users.size(); ++i)
+	{
+		close(users[i].get_fd());
+	}
+}
+
+// ---------------------------
+
+void    Parser::set_epoll_fd(int _epoll_fd)
+{
+	epoll_fd = _epoll_fd;
+}
+
+bool    Parser::check_user(int fd) {
+	for (size_t i = 0; i < users.size(); ++i)
+	{
+		if (users[i].get_fd() == fd)
+			return (true);
+	}
+	return (false);
+}
+
+User &    Parser::get_user(int fd) { // use check user before calling this !!
+	for (size_t i = 0; i < users.size(); ++i)
+	{
+		if (users[i].get_fd() == fd)
+			return (users[i]);
+	}
+	throw std::runtime_error("user not found");
+}
+
+void    Parser::add_user(int fd) {
+	if (!check_user(fd)) {
+		User new_user(fd);
+		new_user.get_socket_address();
+		users.push_back(new_user);
+	}
+}
+
+void    Parser::remove_user(int fd) {
+	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+	close(fd);
+	const User & user = get_user(fd);
+	users.erase(find(users.begin(), users.end(), user));
+}
+
+bool    Parser::check_nick_name(std::string nick)
+{
+	for (size_t i = 0; i < users.size(); ++i)
+	{
+		if (users[i].get_nick_name() == nick)
+			return (false);
+	}
+	return (true);
+}
+
 
 
 //-------------------------------
 
+void	cmd_line::clear()
+{
+	this->cmd.clear();
+	this->args.clear();
+	this->trailing.clear();
+}
 
-void    Parser::parse(User & user, UserManag & user_manag)
+//-------------------------------
+
+bool    Parser::isEnded(User & user)
+{
+	std::string user_buffer = user.get_buffer();
+	if (user_buffer.size() < 2)
+		return (false);
+	if (user_buffer.substr(user_buffer.size() - 2, 2) == POSTFIX)
+		return (true);
+	return (false);
+}
+
+bool	Parser::check_auth(User & user)
+{
+	if (!user.get_auth())
+	{
+		user.send_reply(ERR_NOAUTH(user.get_nick_name()));
+		return (false);
+	}
+	return (true);
+}
+
+void	Parser::process(struct epoll_event event) {
+
+	int user_fd = event.data.fd;
+
+	add_user(user_fd);
+	User & user = get_user(user_fd);
+
+	if (event.events == EPOLLIN)
+	{
+		char buffer[BUFFER_SIZE];
+		memset(buffer, 0, BUFFER_SIZE);
+	
+		ssize_t bytes_recv = recv(user_fd, buffer, BUFFER_SIZE, 0);
+	
+		switch (bytes_recv)
+		{
+			case -1:
+				if (errno == EAGAIN || errno == EWOULDBLOCK) { // no more data to read
+					break;
+				} else {
+					perror("recv");
+					remove_user(user_fd);
+					break;
+				}
+
+			case 0:
+				remove_user(user_fd);
+				break;
+	
+			default:
+				process_buffer(user, buffer);
+				break ;
+		}
+	}
+}
+
+void Parser::process_buffer(User &user, char* buffer)
+{
+	std::string new_data(buffer);
+
+	if (new_data.size() > BUFFER_SIZE)
+		new_data = new_data.substr(new_data.size() - BUFFER_SIZE);
+
+	if (user.get_buffer().size() + new_data.size() > BUFFER_SIZE)
+	{
+		size_t excess = (user.get_buffer().size() + new_data.size()) - BUFFER_SIZE;
+		if (excess >= user.get_buffer().size())
+			user.clear_buffer();
+		else
+			user.set_buffer(user.get_buffer().substr(excess));
+	}
+
+	user.add_to_buffer(buffer);
+	parse(user);
+}
+
+void    Parser::parse(User & user)
 {
 	if (!isEnded(user)) // here we still buffer (we need \r\n)
 		return ;
 
-	cmd_line	c;
+	cmd_line*	c = new cmd_line();
 	std::string	buffer = user.get_buffer();
-
-
 	buffer = buffer.substr(0, buffer.find_last_not_of("\r\n") + 1);
 
 	size_t cmd_end = buffer.find(' ');
-	c.cmd = buffer.substr(0, cmd_end);
+	c->cmd = buffer.substr(0, cmd_end);
 	buffer = (cmd_end != std::string::npos) ? buffer.substr(cmd_end + 1) : "";
 
 	size_t colon_pos = buffer.find(" :");
@@ -43,35 +187,32 @@ void    Parser::parse(User & user, UserManag & user_manag)
 	if (colon_pos != std::string::npos)
 	{
 		std::string non_trailing = buffer.substr(0, colon_pos);
-		c.trailing = buffer.substr(colon_pos + 2);
+		c->trailing = buffer.substr(colon_pos + 2);
 
 		std::istringstream ss(non_trailing);
 		std::string param;
 		while (ss >> param)
-			c.args.push_back(param);
+			c->args.push_back(param);
 	}
 	else
 	{
 		std::istringstream ss(buffer);
 		std::string param;
 		while (ss >> param)
-			c.args.push_back(param);
+			c->args.push_back(param);
 	}
 
-	std::cout << c << std::endl;
-	redirect_cmd(user, c, user_manag);
-	c.cmd.clear();
-	c.args.clear();
-	c.trailing.clear();
+	std::cout << *c << std::endl;
+	redirect_cmd(user, c);
+	delete c;
+	user.clear_buffer();
 }
 
-void	Parser::redirect_cmd(User & user, cmd_line c, UserManag & user_manag)
+void	Parser::redirect_cmd(User & user, cmd_line* c)
 {
-	std::string&				cmd = c.cmd;
-	std::vector<std::string>&	args = c.args;
-	std::string&				trailing = c.trailing;
-
-	// maybe we could restrict the command args numbers ?
+	std::string					cmd = c->cmd;
+	std::vector<std::string>	args = c->args;
+	std::string					trailing = c->trailing;
 
 	if (cmd == "PASS")
 	{
@@ -84,14 +225,13 @@ void	Parser::redirect_cmd(User & user, cmd_line c, UserManag & user_manag)
 		else
 			user.set_auth(true);
 	}
-
 	else if (cmd == "NICK")
 	{
 		if (args.size() > 1)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("NICK")));
 		else if (args.size() < 1)
 			user.send_reply(ERR_NONICKNAMEGIVEN(user.get_nick_name()));
-		else if (user_manag.check_nick_name(args[0]) == false)
+		else if (check_nick_name(args[0]) == false)
 			user.send_reply(ERR_NICKNAMEINUSE(user.get_nick_name()));
 		else if (!valid_nick_name(args[0]))
 			user.send_reply(ERR_ERRONEUSNICKNAME(args[0]));
@@ -101,19 +241,20 @@ void	Parser::redirect_cmd(User & user, cmd_line c, UserManag & user_manag)
 
 	else if (cmd == "USER")
 	{
-		if (args.size() == 4 || (args.size() == 3 && !trailing.empty()))
+		if (args.size() == 3 && !trailing.empty())
 		{
 			std::string	user_name = args[0];
 			std::string	cmp_arg1 = args[1];
 			std::string	cmp_arg2 = args[2];
-			std::string real_name = args.size() == 3 ? trailing : args[3];
+			std::string real_name = trailing;
 
-			if (cmp_arg1 == "0" &&
-				cmp_arg2 == "*" &&
+
+			if (!cmp_arg1.empty() &&
+				!cmp_arg2.empty() &&
 				!user_name.empty() &&
 				!real_name.empty())
 			{
-				user.set_real_name(real_name);
+				user.set_real_name("~" + real_name);
 				user.set_user_name(user_name);
 			}
 			else
@@ -124,24 +265,12 @@ void	Parser::redirect_cmd(User & user, cmd_line c, UserManag & user_manag)
 		else
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("USER")));
 	}
-	else // unknow command
+	else
 	{
 		user.send_reply(ERR_UNKNOWNCOMMAND(cmd));
 	}
-
-	user.clear_buffer();
 }
 
-
-bool    Parser::isEnded(User & user)
-{
-	std::string & user_buffer = user.get_buffer();
-	if (user_buffer.size() < 2)
-		return (false);
-	if (user_buffer.substr(user_buffer.size() - 2, 2) == POSTFIX)
-		return (true);
-	return (false);
-}
 
 // -------------------------------
 

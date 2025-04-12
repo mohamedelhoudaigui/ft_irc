@@ -9,8 +9,12 @@
 #define ERR_NICKNAMEINUSE(target)PREFIX "433 " + target + " :Nickname is already in use" POSTFIX 
 #define ERR_NONICKNAMEGIVEN(target)PREFIX "431 " + target + " :No nickname given" POSTFIX 
 
-#define ERR_ALREADYREGISTERED(target)PREFIX "462 " + target + " :You may not reregister" POSTFIX 
 #define ERR_NEEDMOREPARAMS(command)PREFIX "461 " + command + " :Not enough parameters" POSTFIX  
+
+#define ERR_PASSWDMISMATCH(target)PREFIX "464 " + target + ":Password incorrect" POSTFIX 
+#define ERR_NOAUTH(target)PREFIX "464 " + target + ":Not authenticated" POSTFIX
+
+#define ERR_ALREADYREGISTERED(target)PREFIX "462 " + target + " :You may not reregister" POSTFIX 
 #define ERR_UNKNOWNCOMMAND(command)PREFIX "421 " + command + " :Unknown command" POSTFIX 
 #define ERR_CHANOPRIVSNEEDED(channel)PREFIX "482 " + channel + " :You're not channel operator" POSTFIX
 #define ERR_NOTEXTTOSEND()PREFIX "412 :No text to send" POSTFIX 
@@ -18,7 +22,6 @@
 #define ERR_NOSUCHNICK(nick)PREFIX "401 " + nick + " :No such nick/channel" POSTFIX 
 #define ERR_NOTONCHANNEL(target, channel)   PREFIX "442 " + target + " " + channel + " :You're not on that channel" POSTFIX 
 #define ERR_USERNOTINCHANNEL(user, channel) PREFIX "441 " + user + " " + channel + " :They aren't on that channel" POSTFIX 
-#define ERR_PASSWDMISMATCH(target)PREFIX "464 " + target + ":Password incorrect" POSTFIX 
 #define ERR_ALREADYREGISTRED(target)PREFIX "462 " + target + ":You may not reregister" POSTFIX 
 #define ERR_NOTREGISTERED "Error: You are not registered."
 #define ERR_CHANNELISFULL(client, channel)PREFIX " 471 " + client + " " + channel + " :Cannot join channel (+l)" POSTFIX

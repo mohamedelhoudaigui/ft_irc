@@ -28,7 +28,7 @@ class User
 
 		void			add_to_buffer(char* buffer);
 		void			clear_buffer();
-		std::string &	get_buffer();
+		std::string 	get_buffer();
 		void			set_buffer(std::string buffer);
 
 		bool			get_purge();
@@ -52,7 +52,7 @@ class User
 		private:
 			int				fd;
 			std::string		ip_address;
-			
+
 			bool			auth;
 			std::string 	user_name;
 			std::string		real_name;
