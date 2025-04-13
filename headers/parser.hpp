@@ -18,7 +18,7 @@
 #include "replys.hpp"
 #include "utils.hpp"
 
-#define BUFFER_SIZE 512
+#define BUFFER_SIZE 1024
 
 class   cmd_line
 {

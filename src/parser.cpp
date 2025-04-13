@@ -307,8 +307,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 	{
 		// Minimal CAP response - just acknowledge and end negotiation
         user.send_reply(":localhost CAP * LS :\r\n");
-        user.send_reply(":localhost CAP * ACK :\r\n");
-        user.send_reply(":localhost CAP * END\r\n");
+        // user.send_reply(":localhost CAP * ACK :\r\n");
+        // user.send_reply(":localhost CAP * END\r\n");
 	}
 	else
 	{
