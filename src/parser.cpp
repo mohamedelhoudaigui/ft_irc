@@ -169,50 +169,88 @@ void Parser::process_buffer(User &user, char* buffer)
 	parse(user);
 }
 
-void    Parser::parse(User & user)
-{
-	if (!isEnded(user)) // here we still buffer (we need \r\n)
-		return ;
-
-	cmd_line*	c = new cmd_line();
-	std::string	buffer = user.get_buffer();
-	buffer = buffer.substr(0, buffer.find_last_not_of("\r\n") + 1);
-
-	size_t cmd_end = buffer.find(' ');
-	c->cmd = buffer.substr(0, cmd_end);
-	buffer = (cmd_end != std::string::npos) ? buffer.substr(cmd_end + 1) : "";
-
-	size_t colon_pos = buffer.find(" :");
-
-	if (colon_pos != std::string::npos)
-	{
-		std::string non_trailing = buffer.substr(0, colon_pos);
-		c->trailing = buffer.substr(colon_pos + 2);
-
-		std::istringstream ss(non_trailing);
-		std::string param;
-		while (ss >> param)
-			c->args.push_back(param);
-	}
-	else
-	{
-		std::istringstream ss(buffer);
-		std::string param;
-		while (ss >> param)
-			c->args.push_back(param);
-	}
-
-	std::cout << *c << std::endl;
-	redirect_cmd(user, c);
-	delete c;
-	user.clear_buffer();
+size_t count_crlf(const std::string& str) {
+    size_t count = 0;
+    size_t pos = 0;
+    const std::string target = "\r\n";
+    
+    while ((pos = str.find(target, pos)) != std::string::npos) {
+        ++count;
+        pos += target.length();
+    }
+    
+    return count;
 }
 
-void	Parser::redirect_cmd(User & user, cmd_line* c)
+void Parser::parse(User &user) {
+	std::string buffer = user.get_buffer();
+	
+	// If buffer doesn't contain at least one complete command, return
+	if (!isEnded(user))
+		return;
+
+	std::vector<cmd_line> cmds;
+
+	// Process all complete commands in the buffer
+	size_t pos = 0;
+	size_t end_pos;
+
+	while ((end_pos = buffer.find("\r\n", pos)) != std::string::npos)
+	{
+		std::string command = buffer.substr(pos, end_pos - pos);
+		pos = end_pos + 2; // Skip the \r\n
+		
+		cmd_line c;
+		// Trim whitespace from command
+		command.erase(command.find_last_not_of(" \t\r\n") + 1);
+		
+		size_t cmd_end = command.find(' ');
+		c.cmd = command.substr(0, cmd_end);
+		std::string remaining = (cmd_end != std::string::npos) ? command.substr(cmd_end + 1) : "";
+		
+		size_t colon_pos = remaining.find(" :");
+		
+		if (colon_pos != std::string::npos)
+		{
+			std::string non_trailing = remaining.substr(0, colon_pos);
+			c.trailing = remaining.substr(colon_pos + 2);
+			
+			std::istringstream ss(non_trailing);
+			std::string param;
+			while (ss >> param)
+				c.args.push_back(param);
+		}
+		else 
+		{
+			std::istringstream ss(remaining);
+			std::string param;
+			while (ss >> param)
+				c.args.push_back(param);
+		}
+		
+		cmds.push_back(c);
+	}
+
+	// Remove processed commands from buffer (keep incomplete ones)
+	if (pos > 0)
+	{
+		buffer.erase(0, pos);
+		user.set_buffer(buffer);
+	}
+
+	// Process all complete commands
+	for (std::vector<cmd_line>::iterator it = cmds.begin(); it != cmds.end(); ++it)
+	{
+		redirect_cmd(user, *it);
+		std::cout << *it << std::endl;
+	}
+}
+
+void	Parser::redirect_cmd(User & user, cmd_line & c)
 {
-	std::string					cmd = c->cmd;
-	std::vector<std::string>	args = c->args;
-	std::string					trailing = c->trailing;
+	std::string					cmd = c.cmd;
+	std::vector<std::string>	args = c.args;
+	std::string					trailing = c.trailing;
 
 	if (cmd == "PASS")
 	{
@@ -264,6 +302,13 @@ void	Parser::redirect_cmd(User & user, cmd_line* c)
 		}
 		else
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("USER")));
+	}
+	else if (cmd == "CAP")
+	{
+		// Minimal CAP response - just acknowledge and end negotiation
+        user.send_reply(":localhost CAP * LS :\r\n");
+        user.send_reply(":localhost CAP * ACK :\r\n");
+        user.send_reply(":localhost CAP * END\r\n");
 	}
 	else
 	{

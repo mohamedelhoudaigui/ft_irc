@@ -39,7 +39,7 @@ class Parser
             ~Parser();
 
             void            parse(User & user);
-            void            redirect_cmd(User & user, cmd_line* c);
+            void            redirect_cmd(User & user, cmd_line & c);
             bool            isEnded(User & user);
             bool            check_auth(User & user);
 
