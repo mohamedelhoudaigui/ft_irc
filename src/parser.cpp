@@ -1,5 +1,5 @@
 #include "../headers/parser.hpp"
-
+#include "../headers/replies.hpp"
 // canonical form :
 
 Parser::Parser(): server_password("") {}
@@ -274,7 +274,11 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		else if (!valid_nick_name(args[0]))
 			user.send_reply(ERR_ERRONEUSNICKNAME(args[0]));
 		else
+		{
+			std::string old_nick = user.get_nick_name();
 			user.set_nick_name(args[0]);
+			user.send_reply(RPL_NICK(old_nick, user.get_nick_name()));
+		}
 	}
 
 	else if (cmd == "USER")
@@ -294,6 +298,19 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			{
 				user.set_real_name("~" + real_name);
 				user.set_user_name(user_name);
+				
+				// Check if user has completed registration
+				if (user.get_auth() && user.get_nick_name() != "*" && 
+					!user.get_user_name().empty() && !user.get_real_name().empty())
+				{
+					// Send welcome messages
+					std::string servername = "localhost";
+					user.send_reply(RPL_WELCOME(user.get_nick_name(), user.get_user_name()));
+					user.send_reply(RPL_YOURHOST(servername, user.get_nick_name()));
+					user.send_reply(RPL_CREATED(servername, user.get_nick_name()));
+					user.send_reply(RPL_MYINFO(servername, user.get_nick_name()));
+					user.send_reply(RPL_ISUPPORT(servername));
+				}
 			}
 			else
 			{

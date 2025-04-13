@@ -1,8 +1,14 @@
-#ifndef REPLYS_HPP
-#define REPLYS_HPP
+#ifndef REPLIES_HPP
+#define REPLIES_HPP
 
 #define PREFIX ":IRC "
 #define POSTFIX "\r\n" 
+
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <cstring>
+#include <cstdlib>
 
 //Errors :
 #define ERR_ERRONEUSNICKNAME(nick)PREFIX "432 " + nick + " :Erroneus nickname" POSTFIX 
@@ -33,7 +39,6 @@
 
 //Replies :
 
-#define RPL_WELCOME(sender, msg)               PREFIX "001 " + sender + " : " + msg + POSTFIX 
 #define RPL_NAMREPLY(sender, channel, users)    PREFIX "353 " + sender + " = " + channel + " :" + users + POSTFIX
 #define RPL_ENDOFNAMES(sender, channel)        PREFIX "366 " + sender + " " + channel + " :End of /NAMES list." POSTFIX
 #define RPL_TOPIC(sender, channel, topic)PREFIX " 332 " + sender + " " + channel + " :" + topic + POSTFIX    
@@ -47,5 +52,11 @@
 #define RPL_JOIN(sender, channel)":" + sender + " JOIN :" + channel + POSTFIX
 #define RPL_CHANGEMODE(hostname, channelname, mode)(":" + hostname + " MODE " + channelname + " " + mode + POSTFIX)
 #define RPL_UMODEIS(hostname, channelname, mode, user)":" + hostname + " MODE " + channelname + " " + mode + " " + user + POSTFIX
+
+std::string RPL_WELCOME(std::string nickname, std::string username);
+std::string RPL_YOURHOST(const std::string &servername, const std::string &nichname);
+std::string RPL_CREATED(const std::string &servername, const std::string &nickname);
+std::string RPL_MYINFO(const std::string &servername, const std::string &nickname);
+std::string RPL_ISUPPORT(const std::string &servername);
 
 #endif

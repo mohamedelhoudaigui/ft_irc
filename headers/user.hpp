@@ -9,7 +9,7 @@
 #include <iostream>
 #include <stdio.h>
 
-#include "replys.hpp"
+#include "replies.hpp"
 
 #define BUFFER_SIZE 1024
 
