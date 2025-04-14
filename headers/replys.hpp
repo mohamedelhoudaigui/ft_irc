@@ -5,15 +5,13 @@
 #define POSTFIX "\r\n" 
 
 //Errors :
+
 #define ERR_ERRONEUSNICKNAME(nick)PREFIX "432 " + nick + " :Erroneus nickname" POSTFIX 
 #define ERR_NICKNAMEINUSE(target)PREFIX "433 " + target + " :Nickname is already in use" POSTFIX 
 #define ERR_NONICKNAMEGIVEN(target)PREFIX "431 " + target + " :No nickname given" POSTFIX 
-
 #define ERR_NEEDMOREPARAMS(command)PREFIX "461 " + command + " :Not enough parameters" POSTFIX  
-
 #define ERR_PASSWDMISMATCH(target)PREFIX "464 " + target + ":Password incorrect" POSTFIX 
 #define ERR_NOAUTH(target)PREFIX "464 " + target + ":Not authenticated" POSTFIX
-
 #define ERR_ALREADYREGISTERED(target)PREFIX "462 " + target + " :You may not reregister" POSTFIX 
 #define ERR_UNKNOWNCOMMAND(command)PREFIX "421 " + command + " :Unknown command" POSTFIX 
 #define ERR_CHANOPRIVSNEEDED(channel)PREFIX "482 " + channel + " :You're not channel operator" POSTFIX
@@ -33,7 +31,7 @@
 
 //Replies :
 
-#define RPL_WELCOME(sender, msg)               PREFIX "001 " + sender + " : " + msg + POSTFIX 
+#define RPL_WELCOME(sender, msg) PREFIX "001 " + sender + " : " + msg + POSTFIX 
 #define RPL_NAMREPLY(sender, channel, users)    PREFIX "353 " + sender + " = " + channel + " :" + users + POSTFIX
 #define RPL_ENDOFNAMES(sender, channel)        PREFIX "366 " + sender + " " + channel + " :End of /NAMES list." POSTFIX
 #define RPL_TOPIC(sender, channel, topic)PREFIX " 332 " + sender + " " + channel + " :" + topic + POSTFIX    
@@ -47,5 +45,6 @@
 #define RPL_JOIN(sender, channel)":" + sender + " JOIN :" + channel + POSTFIX
 #define RPL_CHANGEMODE(hostname, channelname, mode)(":" + hostname + " MODE " + channelname + " " + mode + POSTFIX)
 #define RPL_UMODEIS(hostname, channelname, mode, user)":" + hostname + " MODE " + channelname + " " + mode + " " + user + POSTFIX
+#define RPL_PONG(server_name, token) "PONG " + server_name + token + POSTFIX
 
 #endif

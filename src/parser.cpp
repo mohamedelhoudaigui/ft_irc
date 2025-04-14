@@ -274,7 +274,11 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		else if (!valid_nick_name(args[0]))
 			user.send_reply(ERR_ERRONEUSNICKNAME(args[0]));
 		else
+		{
+			std::string old_nick = user.get_nick_name();
 			user.set_nick_name(args[0]);
+			user.send_reply(RPL_NICK(old_nick, user.get_nick_name()));
+		}
 	}
 
 	else if (cmd == "USER")
@@ -296,24 +300,44 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 				user.set_user_name(user_name);
 			}
 			else
-			{
 				user.send_reply(ERR_NEEDMOREPARAMS(std::string("USER")));
-			}
 		}
 		else
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("USER")));
 	}
+
 	else if (cmd == "CAP")
 	{
-		// Minimal CAP response - just acknowledge and end negotiation
-        user.send_reply(":localhost CAP * LS :\r\n");
-        // user.send_reply(":localhost CAP * ACK :\r\n");
-        // user.send_reply(":localhost CAP * END\r\n");
+		if (args.size() != 1)
+			user.send_reply(ERR_NEEDMOREPARAMS(std::string("CAP")));
+		else if (args[0] == "LS")
+        	user.send_reply(":localhost CAP * ACK :\r\n");
+		else if (args[0] == "END")
+			user.send_reply(RPL_WELCOME(user.get_nick_name(), std::string("Welcome to the irc server !")));
 	}
-	else
+
+	else if (cmd == "QUIT")
 	{
-		user.send_reply(ERR_UNKNOWNCOMMAND(cmd));
+		std::string reason = args.empty() ? "Client quit" : args[0];
+		// need to broadcast quit to all channels user belong to.
+		user.send_reply("ERROR :Closing link: " + reason);
+		remove_user(user.get_fd());
 	}
+
+	else if (cmd == "PING")
+	{
+		if (args.size() != 1)
+			user.send_reply(ERR_NEEDMOREPARAMS(std::string("PING")));
+		else
+		{
+			std::string	server_name = "localhost";
+			std::string	token = args[0];
+			user.send_reply(RPL_PONG(server_name, args[0]));
+		}
+	}
+
+	else
+		user.send_reply(ERR_UNKNOWNCOMMAND(cmd));
 }
 
 
