@@ -21,13 +21,13 @@
 #define ERR_NOTONCHANNEL(target, channel)   PREFIX "442 " + target + " " + channel + " :You're not on that channel" POSTFIX 
 #define ERR_USERNOTINCHANNEL(user, channel) PREFIX "441 " + user + " " + channel + " :They aren't on that channel" POSTFIX 
 #define ERR_ALREADYREGISTRED(target)PREFIX "462 " + target + ":You may not reregister" POSTFIX 
-#define ERR_NOTREGISTERED "Error: You are not registered."
 #define ERR_CHANNELISFULL(client, channel)PREFIX " 471 " + client + " " + channel + " :Cannot join channel (+l)" POSTFIX
 #define ERR_INVITEONLYCHAN(client, channel)PREFIX " 473 " + client + " " + channel + " :Cannot join channel (+i)" POSTFIX
 #define ERR_NEEDMODEPARM(channelname, mode)(std::string(": 696 ") + channelname + " * You must specify a parameter for the key mode. " + mode + POSTFIX)
 #define ERR_INVALIDMODEPARM(channelname, mode)(std::string(": 696 ") + channelname + " Invalid mode parameter. " + mode + POSTFIX)
 #define ERR_UNKNOWNMODE(nickname, channelname, mode)(std::string(": 472 ") + nickname + " " + channelname + " " + mode + " :is not a recognized channel mode" + POSTFIX)
 #define ERR_INCORPASS(nickname)(": 464 " + nickname + " :Password incorrect !" + POSTFIX )
+#define ERR_NOTREGISTERED(nickname)(": 464 " + nickname + " :You are not registered !" + POSTFIX )
 
 //Replies :
 

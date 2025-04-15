@@ -54,6 +54,7 @@ class User
 			std::string		ip_address;
 
 			bool			auth;
+
 			std::string 	user_name;
 			std::string		real_name;
 			std::string 	nick_name;

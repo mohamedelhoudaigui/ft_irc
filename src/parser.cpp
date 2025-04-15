@@ -63,7 +63,8 @@ void    Parser::add_user(int fd) {
 	}
 }
 
-void    Parser::remove_user(int fd) {
+void    Parser::remove_user(int fd)
+{
 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
 	close(fd);
 	const User & user = get_user(fd);
@@ -169,7 +170,8 @@ void Parser::process_buffer(User &user, char* buffer)
 	parse(user);
 }
 
-size_t count_crlf(const std::string& str) {
+size_t count_crlf(const std::string& str)
+{
     size_t count = 0;
     size_t pos = 0;
     const std::string target = "\r\n";
@@ -191,17 +193,15 @@ void Parser::parse(User &user) {
 
 	std::vector<cmd_line> cmds;
 
-	// Process all complete commands in the buffer
 	size_t pos = 0;
 	size_t end_pos;
 
 	while ((end_pos = buffer.find("\r\n", pos)) != std::string::npos)
 	{
 		std::string command = buffer.substr(pos, end_pos - pos);
-		pos = end_pos + 2; // Skip the \r\n
+		pos = end_pos + 2;
 		
 		cmd_line c;
-		// Trim whitespace from command
 		command.erase(command.find_last_not_of(" \t\r\n") + 1);
 		
 		size_t cmd_end = command.find(' ');
@@ -231,14 +231,9 @@ void Parser::parse(User &user) {
 		cmds.push_back(c);
 	}
 
-	// Remove processed commands from buffer (keep incomplete ones)
 	if (pos > 0)
-	{
-		buffer.erase(0, pos);
-		user.set_buffer(buffer);
-	}
+		user.set_buffer(buffer.erase(0, pos));
 
-	// Process all complete commands
 	for (std::vector<cmd_line>::iterator it = cmds.begin(); it != cmds.end(); ++it)
 	{
 		redirect_cmd(user, *it);
@@ -263,6 +258,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		else
 			user.set_auth(true);
 	}
+
 	else if (cmd == "NICK")
 	{
 		if (args.size() > 1)
@@ -312,13 +308,14 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("CAP")));
 		else if (args[0] == "LS")
         	user.send_reply(":localhost CAP * ACK :\r\n");
-		else if (args[0] == "END")
+		else if (args[0] == "END" && user.get_auth())
 			user.send_reply(RPL_WELCOME(user.get_nick_name(), std::string("Welcome to the irc server !")));
 	}
 
 	else if (cmd == "QUIT")
 	{
 		std::string reason = args.empty() ? "Client quit" : args[0];
+
 		// need to broadcast quit to all channels user belong to.
 		user.send_reply("ERROR :Closing link: " + reason);
 		remove_user(user.get_fd());
@@ -330,7 +327,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("PING")));
 		else
 		{
-			std::string	server_name = "localhost";
+			std::string	server_name = "rgerggre";
 			std::string	token = args[0];
 			user.send_reply(RPL_PONG(server_name, args[0]));
 		}
@@ -339,7 +336,6 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 	else
 		user.send_reply(ERR_UNKNOWNCOMMAND(cmd));
 }
-
 
 // -------------------------------
 
