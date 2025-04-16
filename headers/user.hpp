@@ -11,7 +11,7 @@
 
 #include "replies.hpp"
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 512
 
 class User
 {
@@ -54,6 +54,7 @@ class User
 			std::string		ip_address;
 
 			bool			auth;
+
 			std::string 	user_name;
 			std::string		real_name;
 			std::string 	nick_name;
