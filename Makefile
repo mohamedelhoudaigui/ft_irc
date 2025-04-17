@@ -1,6 +1,5 @@
 SRCS = ./src/server.cpp \
 		./src/parser.cpp \
-		./src/replies.cpp \
 		./src/user.cpp \
 		./src/utils.cpp \
 		./src/main.cpp
@@ -8,7 +7,7 @@ SRCS = ./src/server.cpp \
 HEADERS = ./headers/server.hpp \
 			./headers/utils.hpp \
 			./headers/parser.hpp \
-			./headers/replies.hpp \
+			./headers/replys.hpp \
 			./headers/user.hpp
 
 OBJ_DIR = objects

@@ -1,14 +1,8 @@
-#ifndef REPLIES_HPP
-#define REPLIES_HPP
+#ifndef REPLYS_HPP
+#define REPLYS_HPP
 
 #define PREFIX ":IRC "
 #define POSTFIX "\r\n" 
-
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <cstring>
-#include <cstdlib>
 
 //Errors :
 

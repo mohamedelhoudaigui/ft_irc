@@ -1,5 +1,5 @@
 #include "../headers/parser.hpp"
-#include "../headers/replies.hpp"
+#include "../headers/replys.hpp"
 // canonical form :
 
 Parser::Parser(): server_password("") {}
@@ -246,7 +246,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 	std::string					cmd = c.cmd;
 	std::vector<std::string>	args = c.args;
 	std::string					trailing = c.trailing;
-
+	
 	if (cmd == "PASS")
 	{
 		if (user.get_auth() == true)
@@ -256,11 +256,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		else if (args[0] != server_password)
 			user.send_reply(ERR_PASSWDMISMATCH(user.get_nick_name()));
 		else
-		{
 			user.set_auth(true);
-			user.send_reply(RPL_WELCOME(user.get_nick_name(), std::string("Welcome to the irc server !")));
-
-		}
 	}
 
 	else if (cmd == "NICK")
@@ -270,7 +266,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		else if (args.size() < 1)
 			user.send_reply(ERR_NONICKNAMEGIVEN(user.get_nick_name()));
 		else if (check_nick_name(args[0]) == false)
-			user.send_reply(ERR_NICKNAMEINUSE(std::string("debug...")));
+			user.send_reply(ERR_NICKNAMEINUSE(user.get_nick_name()));
 		else if (!valid_nick_name(args[0]))
 			user.send_reply(ERR_ERRONEUSNICKNAME(args[0]));
 		else
@@ -298,19 +294,6 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			{
 				user.set_real_name("~" + real_name);
 				user.set_user_name(user_name);
-				
-				// Check if user has completed registration
-				if (user.get_auth() && user.get_nick_name() != "*" && 
-					!user.get_user_name().empty() && !user.get_real_name().empty())
-				{
-					// Send welcome messages
-					std::string servername = "localhost";
-					user.send_reply(RPL_WELCOME(user.get_nick_name(), user.get_user_name()));
-					user.send_reply(RPL_YOURHOST(servername, user.get_nick_name()));
-					user.send_reply(RPL_CREATED(servername, user.get_nick_name()));
-					user.send_reply(RPL_MYINFO(servername, user.get_nick_name()));
-					user.send_reply(RPL_ISUPPORT(servername));
-				}
 			}
 			else
 				user.send_reply(ERR_NEEDMOREPARAMS(std::string("USER")));
@@ -324,7 +307,9 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		if (args.size() != 1)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("CAP")));
 		else if (args[0] == "LS")
-        	user.send_reply(":localhost CAP * ACK :\r\n");
+			user.send_reply(":localhost CAP * ACK :\r\n");
+		else if (args[0] == "END" && user.get_auth())
+			user.send_reply(RPL_WELCOME(user.get_nick_name(), std::string("Welcome to the irc server !")));
 	}
 
 	else if (cmd == "QUIT")
