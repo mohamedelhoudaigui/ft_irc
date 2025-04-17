@@ -23,3 +23,7 @@ Channel Channel::operator=(const Channel &c){
 std::string Channel::get_name(){
     return name;
 }
+
+const std::vector<User *>& Channel::get_users() const{
+    return users;
+}

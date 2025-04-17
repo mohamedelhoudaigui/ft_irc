@@ -13,12 +13,15 @@
 #include <errno.h>
 #include <cerrno>
 #include <cstring>
+#include <map>
 
 #include "user.hpp"
 #include "replys.hpp"
 #include "utils.hpp"
 
 #define BUFFER_SIZE 512
+
+class Channel;
 
 class   cmd_line
 {
@@ -60,6 +63,9 @@ class Parser
         std::string         server_password;
         std::vector<User>	users;
 		int					epoll_fd;
+        //ADDED BY CAZIANE
+        std::map<std::string, Channel> channels;
+
 
 };
 

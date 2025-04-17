@@ -1,5 +1,6 @@
 #include "../headers/parser.hpp"
 #include "../headers/replys.hpp"
+#include "../headers/channels.hpp"
 // canonical form :
 
 Parser::Parser(): server_password("") {}
@@ -347,12 +348,37 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 
 void Parser::privmsg(int fd, std::string receiver, std::string msg, User &user)
 {
-	for (size_t i = 0; i < users.size(); i++)
+	if (receiver[0] == '#')
 	{
-		if (check_user(fd) && check_nick_name(receiver))
+		std::map<std::string, Channel>::iterator it = channels.find(receiver);
+		if (it != channels.end())
 		{
-			user.send_reply(msg);
-			break ;
+			Channel &channel = it->second;
+			const std::vector<User *> &channel_users = channel.get_users();
+
+			for (size_t i = 0; i < channel_users.size(); ++i)
+			{
+				User *target = channel_users[i];
+				if (target->get_fd() != user.get_fd())
+				{
+					target->send_reply(msg);
+				}
+			}
+		}
+		else
+		{
+			user.send_reply(ERR_NOSUCHCHANNEL(receiver));
+		}
+	}
+	else
+	{
+		for (size_t i = 0; i < users.size(); i++)
+		{
+			if (check_user(fd) && check_nick_name(receiver))
+			{
+				user.send_reply(msg);
+				break ;
+			}
 		}
 	}
 }
