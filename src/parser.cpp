@@ -256,7 +256,11 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		else if (args[0] != server_password)
 			user.send_reply(ERR_PASSWDMISMATCH(user.get_nick_name()));
 		else
+		{
 			user.set_auth(true);
+			user.send_reply(RPL_WELCOME(user.get_nick_name(), std::string("Welcome to the irc server !")));
+
+		}
 	}
 
 	else if (cmd == "NICK")
@@ -266,7 +270,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		else if (args.size() < 1)
 			user.send_reply(ERR_NONICKNAMEGIVEN(user.get_nick_name()));
 		else if (check_nick_name(args[0]) == false)
-			user.send_reply(ERR_NICKNAMEINUSE(user.get_nick_name()));
+			user.send_reply(ERR_NICKNAMEINUSE(std::string("debug...")));
 		else if (!valid_nick_name(args[0]))
 			user.send_reply(ERR_ERRONEUSNICKNAME(args[0]));
 		else
@@ -321,8 +325,6 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("CAP")));
 		else if (args[0] == "LS")
         	user.send_reply(":localhost CAP * ACK :\r\n");
-		else if (args[0] == "END" && user.get_auth())
-			user.send_reply(RPL_WELCOME(user.get_nick_name(), std::string("Welcome to the irc server !")));
 	}
 
 	else if (cmd == "QUIT")
@@ -345,9 +347,29 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			user.send_reply(RPL_PONG(server_name, args[0]));
 		}
 	}
-
+	//ADDED BY CAZIANE
+	else if (cmd == "PRIVMSG")
+	{
+		if (args.size() < 1 || trailing.empty())
+			user.send_reply(ERR_NOTEXTTOSEND());
+		else
+			privmsg(user.get_fd(), args[0], trailing, user);
+		
+	}
 	else
 		user.send_reply(ERR_UNKNOWNCOMMAND(cmd));
+}
+
+void Parser::privmsg(int fd, std::string receiver, std::string msg, User &user)
+{
+	for (size_t i = 0; i < users.size(); i++)
+	{
+		if (check_user(fd) && check_nick_name(receiver))
+		{
+			user.send_reply(msg);
+			break ;
+		}
+	}
 }
 
 // -------------------------------

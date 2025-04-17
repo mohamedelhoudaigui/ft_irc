@@ -53,6 +53,8 @@ class Parser
             bool			check_user(int fd);
             bool			check_nick_name(std::string nick);
 
+            //ADDED BY CAZIANE
+            void            privmsg(int fd, std::string receiver, std::string msg, User &user);
 
     private:
         std::string         server_password;
