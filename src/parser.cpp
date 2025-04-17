@@ -328,7 +328,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("PING")));
 		else
 		{
-			std::string	server_name = "rgerggre";
+			std::string	server_name = "localhost";
 			std::string	token = args[0];
 			user.send_reply(RPL_PONG(server_name, args[0]));
 		}
