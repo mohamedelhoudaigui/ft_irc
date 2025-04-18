@@ -24,6 +24,10 @@ std::string Channel::get_name(){
     return name;
 }
 
-const std::vector<User *>& Channel::get_users() const{
+std::vector<User *>& Channel::get_users(){
     return users;
+}
+
+void Channel::add_user(User* user) {
+    users.push_back(user);
 }

@@ -18,6 +18,7 @@ class Channel{
 
 
     std::string get_name();
-    const std::vector<User *>& get_users() const;
+    std::vector<User *>& get_users();
+    void add_user(User* user);
     
 };
