@@ -383,6 +383,11 @@ void Parser::privmsg(int fd, std::string receiver, std::string msg, User &user)
 	}
 }
 
+void            Parser::topic(User &user, std::string channel_name, std::string new_topic){
+	
+}
+
+
 // -------------------------------
 
 std::ostream& operator<<(std::ostream& os, const cmd_line& c)
