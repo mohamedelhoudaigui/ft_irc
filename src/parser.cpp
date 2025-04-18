@@ -316,8 +316,6 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 	else if (cmd == "QUIT")
 	{
 		std::string reason = args.empty() ? "Client quit" : args[0];
-
-		// need to broadcast quit to all channels user belong to.
 		user.send_reply("ERROR :Closing link: " + reason);
 		remove_user(user.get_fd());
 	}
@@ -333,7 +331,6 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			user.send_reply(RPL_PONG(server_name, args[0]));
 		}
 	}
-	//ADDED BY CAZIANE
 	else if (cmd == "PRIVMSG")
 	{
 		if (args.size() < 1 || trailing.empty())
@@ -342,45 +339,97 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			privmsg(user.get_fd(), args[0], trailing, user);
 		
 	}
+	else if (cmd == "JOIN") {
+		if (args.size() != 1)
+			user.send_reply(ERR_NEEDMOREPARAMS(std::string("JOIN")));
+		else
+		{
+			std::string channel_name = args[0];
+			if (channel_name[0] != '#')
+				user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+			else
+			{
+				std::map<std::string, Channel>::iterator it = channels.find(channel_name);
+				if (it != channels.end())
+				{
+					Channel &existing_channel = it->second;
+					bool userAlreadyInChannel = false;
+					const std::vector<User *> &current_users = existing_channel.get_users();
+					for (size_t i = 0; i < current_users.size(); i++) {
+						if (current_users[i]->get_fd() == user.get_fd()) {
+							userAlreadyInChannel = true;
+							break;
+						}
+					}
+					if (!userAlreadyInChannel) {
+						existing_channel.add_user(&user);
+					}
+				}
+				else
+				{
+					Channel new_channel;
+					channels[channel_name] = new_channel;
+					Channel &channel_ref = channels[channel_name];
+					channel_ref.add_user(&user);
+				}
+				
+				user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
+				
+				// Debug
+				std::map<std::string, Channel>::iterator debug_it = channels.find(channel_name);
+				if (debug_it != channels.end()) {
+					const std::vector<User *> &users_in_channel = debug_it->second.get_users();
+					std::cout << "Channel " << channel_name << " now has " 
+							  << users_in_channel.size() << " users" << std::endl;
+					std::cout << "Users in channel " << channel_name << ":" << std::endl;
+					for (size_t i = 0; i < users_in_channel.size(); i++) {
+						std::cout << " - " << users_in_channel[i]->get_nick_name() << std::endl;
+					}
+				}
+			}
+		}
+	}
 	else
 		user.send_reply(ERR_UNKNOWNCOMMAND(cmd));
 }
 
 void Parser::privmsg(int fd, std::string receiver, std::string msg, User &user)
 {
-	if (receiver[0] == '#')
-	{
-		std::map<std::string, Channel>::iterator it = channels.find(receiver);
-		if (it != channels.end())
-		{
-			Channel &channel = it->second;
-			const std::vector<User *> &channel_users = channel.get_users();
-
-			for (size_t i = 0; i < channel_users.size(); ++i)
-			{
-				User *target = channel_users[i];
-				if (target->get_fd() != user.get_fd())
-				{
-					target->send_reply(msg);
-				}
-			}
-		}
-		else
-		{
-			user.send_reply(ERR_NOSUCHCHANNEL(receiver));
-		}
-	}
-	else
-	{
-		for (size_t i = 0; i < users.size(); i++)
-		{
-			if (check_user(fd) && check_nick_name(receiver))
-			{
-				user.send_reply(msg);
-				break ;
-			}
-		}
-	}
+	(void)fd;
+    if (receiver[0] == '#')
+    {
+        std::map<std::string, Channel>::iterator it = channels.find(receiver);
+        if (it != channels.end())
+        {
+            Channel &channel = it->second;
+            const std::vector<User *> &channel_users = channel.get_users();
+            std::string formatted_msg = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@localhost PRIVMSG " + receiver + " :" + msg + "\r\n";
+            for (size_t i = 0; i < channel_users.size(); ++i)
+            {
+                User *target = channel_users[i];
+                if (target->get_fd() != user.get_fd())
+                    send(target->get_fd(), formatted_msg.c_str(), formatted_msg.size(), 0);
+            }
+        }
+        else
+            user.send_reply(ERR_NOSUCHCHANNEL(receiver));
+    }
+    else
+    {
+        bool found = false;
+        for (size_t i = 0; i < users.size(); i++)
+        {
+            if (users[i].get_nick_name() == receiver)
+            {
+                std::string formatted_msg = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@localhost PRIVMSG " + receiver + " :" + msg + "\r\n";
+                send(users[i].get_fd(), formatted_msg.c_str(), formatted_msg.size(), 0);
+                found = true;
+                break;
+            }
+        }        
+        if (!found)
+            user.send_reply(ERR_NOSUCHNICK(receiver));
+    }
 }
 
 void            Parser::topic(User &user, std::string channel_name, std::string new_topic){

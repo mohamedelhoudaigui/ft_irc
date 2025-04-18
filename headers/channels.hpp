@@ -23,7 +23,14 @@ class Channel{
 
 
     std::string get_name();
+<<<<<<< HEAD
     const std::vector<User *>& get_users() const;
     void    set_topic(const std::string &name, const std::string &author);
     std::string get_topic() const;
 };
+=======
+    std::vector<User *>& get_users();
+    void add_user(User* user);
+    
+};
+>>>>>>> oel-feng

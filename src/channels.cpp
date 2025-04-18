@@ -24,10 +24,11 @@ std::string Channel::get_name(){
     return name;
 }
 
-const std::vector<User *>& Channel::get_users() const{
+std::vector<User *>& Channel::get_users(){
     return users;
 }
 
+<<<<<<< HEAD
 void    Channel::set_topic(const std::string &name, const std::string &author){
     this->name = name;
     this->topic_author = author;
@@ -38,3 +39,8 @@ std::string Channel::get_topic() const{
     return this->name;
 }
 
+=======
+void Channel::add_user(User* user) {
+    users.push_back(user);
+}
+>>>>>>> oel-feng
