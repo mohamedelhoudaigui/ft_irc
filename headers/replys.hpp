@@ -9,7 +9,7 @@
 #define ERR_ERRONEUSNICKNAME(nick)PREFIX "432 " + nick + " :Erroneus nickname" POSTFIX 
 #define ERR_NICKNAMEINUSE(target)PREFIX "433 " + target + " :Nickname is already in use" POSTFIX 
 #define ERR_NONICKNAMEGIVEN(target)PREFIX "431 " + target + " :No nickname given" POSTFIX 
-#define ERR_NEEDMOREPARAMS(command)PREFIX "461 " + command + " :Not enough parameters" POSTFIX  
+#define ERR_NEEDMOREPARAMS(command) (std::string(PREFIX) + "461 " + command + " :Not enough parameters" + POSTFIX) 
 #define ERR_PASSWDMISMATCH(target)PREFIX "464 " + target + ":Password incorrect" POSTFIX 
 #define ERR_NOAUTH(target)PREFIX "464 " + target + ":Not authenticated" POSTFIX
 #define ERR_ALREADYREGISTERED(target)PREFIX "462 " + target + " :You may not reregister" POSTFIX 

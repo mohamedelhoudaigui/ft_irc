@@ -389,6 +389,16 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			}
 		}
 	}
+	else if (cmd == "TOPIC")
+	{
+		if (args.size() != 1)
+			user.send_reply(ERR_NEEDMOREPARAMS(std::string("TOPIC")));
+		
+	}
+	else if (cmd == "MODE")
+	{
+		handleModeCommand(&user, args);
+	}
 	else
 		user.send_reply(ERR_UNKNOWNCOMMAND(cmd));
 }
@@ -432,9 +442,129 @@ void Parser::privmsg(int fd, std::string receiver, std::string msg, User &user)
     }
 }
 
-void            Parser::topic(User &user, std::string channel_name, std::string new_topic){
-	
+// void	Parser::topic(User &user, std::string channel_name, std::string new_topic,  Channel &channel){
+// 	if (channel_name.empty())
+// 		user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+// 	else{
+		
+// 	}	
+// }
+
+
+// void	Parser::mode(User &user, std::string target, std::string mode, Channel &channel){
+// 	if (target[0] == '#')
+//     {
+//         std::map<std::string, Channel>::iterator it = channels.find(target);
+//         if (it != channels.end())
+//         {
+//             Channel &channel = it->second;
+            
+//         }
+//         else
+//             user.send_reply(ERR_NOSUCHCHANNEL(receiver));
+//     }
+
+// }
+
+
+void Parser::handleModeCommand(User* user, const std::vector<std::string>& args) {
+    if (args.size() < 1) {
+        user->send_reply(ERR_NEEDMOREPARAMS("MODE"));
+        return;
+    }
+
+    const std::string& target = args[0];
+    
+    if (target[0] != '#') {
+        user->send_reply(ERR_NOSUCHCHANNEL(target));
+        return;
+    }
+    std::map<std::string, Channel>::iterator it = channels.find(target);
+    if (it == channels.end())
+		user->send_reply(ERR_NOSUCHCHANNEL(target));
+	else{
+	Channel &channel = it->second;
+
+    if (args.size() == 1) {
+        std::string modeStr = "+" + channel.get_modes();
+        if (channel.has_mode(std::string("k"))) modeStr += " " + channel.get_key();
+        if (channel.has_mode(std::string("k")))
+		{
+			std::ostringstream oss;
+			oss << channel.get_user_limit();
+			modeStr += " " + oss.str();
+		}
+        
+        user->send_reply(RPL_CHANGEMODE(user->get_nick_name(), target, modeStr));
+        user->send_reply(RPL_CHANGEMODE(user->get_nick_name(), target, channel.getCreationTime()));
+        return;
+    }
+
+    if (!channel.is_operator(user)) {
+        user->send_reply(ERR_CHANOPRIVSNEEDED(target));
+        return;
+    }
+    const std::string& modestring = args[1];
+    std::vector<std::string> modeArgs(args.begin() + 2, args.end());
+    size_t argIndex = 0;
+    char currentAction = '+';
+
+    for (size_t i = 0; i < modestring.length(); ++i) {
+		char c = modestring[i];
+        if (c == '+' || c == '-') {
+            currentAction = c;
+            continue;
+        }
+
+        switch (c) {
+            case 'i':
+            case 't':
+                channel.set_mode(std::string(1,c), currentAction == '+');
+                break;
+                
+            case 'k':
+                if (currentAction == '+') {
+                    if (argIndex < modeArgs.size()) {
+                        channel.set_key_mode(modeArgs[argIndex++], 1);
+                    }
+                } else {
+                    channel.set_key_mode("", 1);
+                }
+                break;
+                
+            case 'l':
+                if (currentAction == '+') {
+                    if (argIndex < modeArgs.size()) {
+                        channel.set_user_limits(1,std::atoi(modeArgs[argIndex++].c_str()));
+                    }
+                } else {
+                    channel.set_user_limits(1,0);
+                }
+                break;
+                
+            case 'o': {
+                if (argIndex < modeArgs.size()) {
+                    User* targetUser = &get_user(atoi(modeArgs[argIndex++].c_str()));
+                    if (targetUser) {
+                        if (currentAction == '+') {
+                            channel.set_operators_mode(1,targetUser);
+                        } else {
+                            channel.remove_operator(targetUser);
+                        }
+                    }
+                }
+                break;
+            }
+                
+            default:
+                user->send_reply(ERR_UNKNOWNMODE(user->get_nick_name(), target, std::string(1,c)));
+                continue;
+        }
+	}
+    }
 }
+
+
 
 
 // -------------------------------

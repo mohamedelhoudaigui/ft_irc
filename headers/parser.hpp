@@ -58,8 +58,9 @@ class Parser
 
             //ADDED BY CAZIANE
             void            privmsg(int fd, std::string receiver, std::string msg, User &user);
-            void            topic(User &user, std::string channel_name, std::string new_topic);
-
+            void            topic(User &user, std::string channel_name, std::string new_topic, Channel &channel);
+            void            handleModeCommand(User* user, const std::vector<std::string>& args);
+            
     private:
         std::string         server_password;
         std::vector<User>	users;
