@@ -488,7 +488,7 @@ void Parser::handleModeCommand(User* user, const std::vector<std::string>& args)
     if (args.size() == 1) {
         std::string modeStr = "+" + channel.get_modes();
         if (channel.has_mode(std::string("k"))) modeStr += " " + channel.get_key();
-        if (channel.has_mode(std::string("k")))
+        if (channel.has_mode(std::string("l")))
 		{
 			std::ostringstream oss;
 			oss << channel.get_user_limit();
