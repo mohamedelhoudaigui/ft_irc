@@ -442,30 +442,6 @@ void Parser::privmsg(int fd, std::string receiver, std::string msg, User &user)
     }
 }
 
-// void	Parser::topic(User &user, std::string channel_name, std::string new_topic,  Channel &channel){
-// 	if (channel_name.empty())
-// 		user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
-// 	else{
-		
-// 	}	
-// }
-
-
-// void	Parser::mode(User &user, std::string target, std::string mode, Channel &channel){
-// 	if (target[0] == '#')
-//     {
-//         std::map<std::string, Channel>::iterator it = channels.find(target);
-//         if (it != channels.end())
-//         {
-//             Channel &channel = it->second;
-            
-//         }
-//         else
-//             user.send_reply(ERR_NOSUCHCHANNEL(receiver));
-//     }
-
-// }
-
 
 User*    Parser::find_user_by_nickname(Channel &channel,const std::string nickname)
 {
