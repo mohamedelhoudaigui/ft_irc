@@ -51,6 +51,6 @@ class Channel{
     void set_operators_mode(bool add, User *user);
     void remove_operator(User *user);
 
-    std::string getCreationTime() const;
+    
 };
 

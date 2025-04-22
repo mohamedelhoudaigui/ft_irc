@@ -467,6 +467,18 @@ void Parser::privmsg(int fd, std::string receiver, std::string msg, User &user)
 // }
 
 
+User*    Parser::find_user_by_nickname(Channel &channel,const std::string nickname)
+{
+	const std::vector<User *> &user = channel.get_users();
+	for (size_t i = 0; i < user.size(); ++i)
+	{
+		User *target = user[i];
+		if (target->get_nick_name() == nickname)
+			return target;
+	}
+	return NULL;
+}
+
 void Parser::handleModeCommand(User* user, const std::vector<std::string>& args) {
     if (args.size() < 1) {
         user->send_reply(ERR_NEEDMOREPARAMS("MODE"));
@@ -496,7 +508,6 @@ void Parser::handleModeCommand(User* user, const std::vector<std::string>& args)
 		}
         
         user->send_reply(RPL_CHANGEMODE(user->get_nick_name(), target, modeStr));
-        user->send_reply(RPL_CHANGEMODE(user->get_nick_name(), target, channel.getCreationTime()));
         return;
     }
 
@@ -528,7 +539,7 @@ void Parser::handleModeCommand(User* user, const std::vector<std::string>& args)
                         channel.set_key_mode(modeArgs[argIndex++], 1);
                     }
                 } else {
-                    channel.set_key_mode("", 1);
+                    channel.set_key_mode("", 0);
                 }
                 break;
                 
@@ -538,13 +549,13 @@ void Parser::handleModeCommand(User* user, const std::vector<std::string>& args)
                         channel.set_user_limits(1,std::atoi(modeArgs[argIndex++].c_str()));
                     }
                 } else {
-                    channel.set_user_limits(1,0);
+                    channel.set_user_limits(0,0);
                 }
                 break;
                 
             case 'o': {
                 if (argIndex < modeArgs.size()) {
-                    User* targetUser = &get_user(atoi(modeArgs[argIndex++].c_str()));
+                    User* targetUser = find_user_by_nickname(channel, modeArgs[argIndex++]);
                     if (targetUser) {
                         if (currentAction == '+') {
                             channel.set_operators_mode(1,targetUser);

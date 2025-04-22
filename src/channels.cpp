@@ -62,15 +62,7 @@ unsigned long Channel::get_user_limit(){
 }
 
 
-std::string Channel::getCreationTime() const
-{
-    return this->creationTime; // ou tout autre attribut que tu utilises
-}
-
 //mode command
-
-
-
 
 
 bool Channel::has_mode(std::string mode){
@@ -83,7 +75,7 @@ void Channel::set_mode(std::string mode, bool add){
     else if (!add){
         std::string::size_type pos = modes.find(mode[0]);
         if (pos != std::string::npos)
-        modes.erase(pos, 1);
+            modes.erase(pos, 1);
     }
 }
 
@@ -94,17 +86,25 @@ void Channel::set_key_mode(std::string key, bool add){
         if (!has_mode(std::string(1,'k')))
             modes += 'k';
     }
+    else {
+        this->key = "";
+        std::string::size_type pos = modes.find('k');
+        if (pos != std::string::npos)
+            modes.erase(pos, 1);
+    }
 }
 
 void Channel::set_user_limits(bool add, unsigned long limit){
     if (add){
         this->user_limts = limit;
         if (!has_mode(std::string(1,'l')))
-        modes += 'l';
+            modes += 'l';
     }
     else{
         this->user_limts = 0;
-        modes.erase('l');
+        std::string::size_type pos = modes.find('l');
+        if (pos != std::string::npos)
+            modes.erase(pos, 1);
     }
 }
 
@@ -114,15 +114,14 @@ void Channel::set_operators_mode(bool add, User *user){
             operators.push_back(user);
     }
     else{
-
         std::vector<User*>::iterator it = std::find(operators.begin(), operators.end(), user);
         if (it != operators.end())
-        operators.erase(it);
+            operators.erase(it);
     }
 }
 
 
 void Channel::remove_operator(User *user)
 {
-    operators.erase(std::remove(operators.begin(), operators.end(), user));
+    operators.erase(std::remove(operators.begin(), operators.end(), user), operators.end());
 }

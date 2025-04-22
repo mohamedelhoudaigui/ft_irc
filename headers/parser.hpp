@@ -61,6 +61,7 @@ class Parser
             void            topic(User &user, std::string channel_name, std::string new_topic, Channel &channel);
             void            handleModeCommand(User* user, const std::vector<std::string>& args);
             
+            User*              find_user_by_nickname(Channel &channel,const std::string nickname);
     private:
         std::string         server_password;
         std::vector<User>	users;
