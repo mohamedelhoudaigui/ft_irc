@@ -393,6 +393,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 	{
 		if (args.size() != 1)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("TOPIC")));
+		else
+			topic_command(args[0], trailing, user);
 		
 	}
 	else if (cmd == "MODE")
@@ -442,6 +444,29 @@ void Parser::privmsg(int fd, std::string receiver, std::string msg, User &user)
     }
 }
 
+void	Parser::topic_command(std::string channel_name, std::string new_topic, User* user){
+	if (channel_name.empty())
+		return ;
+	std::map<std::string, Channel>::iterator it = channels.find(channel_name);
+    if (it != channels.end())
+    {
+        Channel &channel = it->second;
+        const std::vector<User *> &channel_users = channel.get_users();
+        channel_users::iterator it = users.find(user);
+		if (it == users.end())
+			send_reply(ERR_NOTONCHANNEL(user, channel));
+		else{
+			if (!new_topic.empty())
+				channel.set_topic(new_topic, user.get_nick_name());
+			else if (new_topic == "")
+				channel.set_topic("", user.get_nick_name());
+			else if (new_topic.empty())
+				std::cout << channel.get_topic() << std::endl;
+		}
+    }
+    else
+        user.send_reply(ERR_NOSUCHCHANNEL(receiver));
+}
 
 User*    Parser::find_user_by_nickname(Channel &channel,const std::string nickname)
 {

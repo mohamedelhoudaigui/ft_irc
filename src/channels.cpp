@@ -125,3 +125,11 @@ void Channel::remove_operator(User *user)
 {
     operators.erase(std::remove(operators.begin(), operators.end(), user), operators.end());
 }
+
+std::string Channel::get_topic_author() const{
+    return topic_author;
+}
+
+time_t Channel::get_topic_time() const{
+    return topic_time_change;
+}
