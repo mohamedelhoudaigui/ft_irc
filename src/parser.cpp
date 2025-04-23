@@ -173,16 +173,16 @@ void Parser::process_buffer(User &user, char* buffer)
 
 size_t count_crlf(const std::string& str)
 {
-    size_t count = 0;
-    size_t pos = 0;
-    const std::string target = "\r\n";
-    
-    while ((pos = str.find(target, pos)) != std::string::npos) {
-        ++count;
-        pos += target.length();
-    }
-    
-    return count;
+	size_t count = 0;
+	size_t pos = 0;
+	const std::string target = "\r\n";
+	
+	while ((pos = str.find(target, pos)) != std::string::npos) {
+		++count;
+		pos += target.length();
+	}
+	
+	return count;
 }
 
 void Parser::parse(User &user) {
@@ -371,21 +371,81 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 					channels[channel_name] = new_channel;
 					Channel &channel_ref = channels[channel_name];
 					channel_ref.add_user(&user);
+					channel_ref.set_operators_mode(1, &user);
 				}
 				
 				user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
-				
-				// Debug
-				std::map<std::string, Channel>::iterator debug_it = channels.find(channel_name);
-				if (debug_it != channels.end()) {
-					const std::vector<User *> &users_in_channel = debug_it->second.get_users();
-					std::cout << "Channel " << channel_name << " now has " 
-							  << users_in_channel.size() << " users" << std::endl;
-					std::cout << "Users in channel " << channel_name << ":" << std::endl;
-					for (size_t i = 0; i < users_in_channel.size(); i++) {
-						std::cout << " - " << users_in_channel[i]->get_nick_name() << std::endl;
+			}
+		}
+	}
+	else if (cmd == "INVITE") {
+		if (args.size() != 2)
+			user.send_reply(ERR_NEEDMOREPARAMS(std::string("INVITE")));
+		else
+		{
+			std::string invited = args[0];
+			std::string channel_name = args[1];
+
+			if (channel_name[0] != '#')
+				user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+			else
+			{
+				std::map<std::string, Channel>::iterator it = channels.find(channel_name);
+				if (it != channels.end())
+				{
+					Channel &channel = it->second;
+					User *selected_user = find_user_by_nickname(channel, invited);
+					if (selected_user)
+					{
+						channel.add_user(selected_user);
+						selected_user->send_reply(RPL_INVITE(user.get_nick_name(), invited, channel_name));
 					}
+					else
+						user.send_reply(ERR_NOSUCHNICK(invited));
 				}
+				else
+					user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+			}
+		}
+	}
+	else if (cmd == "KICK") {
+		if (args.size() != 2)
+			user.send_reply(ERR_NEEDMOREPARAMS(std::string("KICK")));
+		else {
+			std::string channel_name = args[0];
+			std::string kicked = args[1];
+	
+			std::cout << "KICK: " << kicked << " IN " << channel_name << std::endl;
+	
+			if (channel_name[0] != '#')
+					user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+			else {
+				std::map<std::string, Channel>::iterator it = channels.find(channel_name);
+				if (it != channels.end()) {
+					std::cout << "Channel found" << std::endl;
+					
+					Channel &channel = it->second;
+					if (!channel.is_operator(&user)) {
+						user.send_reply(ERR_CHANOPRIVSNEEDED(channel_name));
+						return;
+					}
+					User *selected_user = find_user_by_nickname(channel, kicked);
+					if (selected_user) {
+						std::string kick_message = ":" + user.get_nick_name() + "!" + user.get_user_name() 
+						+ "@localhost KICK " + channel_name + " " + kicked + " :Kicked by " 
+						+ user.get_nick_name() + "\r\n";
+						const std::vector<User *> &channel_users = channel.get_users();
+						for (size_t i = 0; i < channel_users.size(); ++i) {
+							send(channel_users[i]->get_fd(), kick_message.c_str(), kick_message.size(), 0);
+						}
+						channel.remove_user(selected_user);
+						std::cout << "User " << kicked << " removed from channel " << channel_name << std::endl;
+					}
+					else
+						user.send_reply(ERR_NOSUCHNICK(kicked));
+				}
+				else
+					user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
 			}
 		}
 	}
@@ -406,40 +466,40 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 void Parser::privmsg(int fd, std::string receiver, std::string msg, User &user)
 {
 	(void)fd;
-    if (receiver[0] == '#')
-    {
-        std::map<std::string, Channel>::iterator it = channels.find(receiver);
-        if (it != channels.end())
-        {
-            Channel &channel = it->second;
-            const std::vector<User *> &channel_users = channel.get_users();
-            std::string formatted_msg = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@localhost PRIVMSG " + receiver + " :" + msg + "\r\n";
-            for (size_t i = 0; i < channel_users.size(); ++i)
-            {
-                User *target = channel_users[i];
-                if (target->get_fd() != user.get_fd())
-                    send(target->get_fd(), formatted_msg.c_str(), formatted_msg.size(), 0);
-            }
-        }
-        else
-            user.send_reply(ERR_NOSUCHCHANNEL(receiver));
-    }
-    else
-    {
-        bool found = false;
-        for (size_t i = 0; i < users.size(); i++)
-        {
-            if (users[i].get_nick_name() == receiver)
-            {
-                std::string formatted_msg = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@localhost PRIVMSG " + receiver + " :" + msg + "\r\n";
-                send(users[i].get_fd(), formatted_msg.c_str(), formatted_msg.size(), 0);
-                found = true;
-                break;
-            }
-        }        
-        if (!found)
-            user.send_reply(ERR_NOSUCHNICK(receiver));
-    }
+	if (receiver[0] == '#')
+	{
+		std::map<std::string, Channel>::iterator it = channels.find(receiver);
+		if (it != channels.end())
+		{
+			Channel &channel = it->second;
+			const std::vector<User *> &channel_users = channel.get_users();
+			std::string formatted_msg = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@localhost PRIVMSG " + receiver + " :" + msg + "\r\n";
+			for (size_t i = 0; i < channel_users.size(); ++i)
+			{
+				User *target = channel_users[i];
+				if (target->get_fd() != user.get_fd())
+					send(target->get_fd(), formatted_msg.c_str(), formatted_msg.size(), 0);
+			}
+		}
+		else
+			user.send_reply(ERR_NOSUCHCHANNEL(receiver));
+	}
+	else
+	{
+		bool found = false;
+		for (size_t i = 0; i < users.size(); i++)
+		{
+			if (users[i].get_nick_name() == receiver)
+			{
+				std::string formatted_msg = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@localhost PRIVMSG " + receiver + " :" + msg + "\r\n";
+				send(users[i].get_fd(), formatted_msg.c_str(), formatted_msg.size(), 0);
+				found = true;
+				break;
+			}
+		}        
+		if (!found)
+			user.send_reply(ERR_NOSUCHNICK(receiver));
+	}
 }
 
 
@@ -456,99 +516,99 @@ User*    Parser::find_user_by_nickname(Channel &channel,const std::string nickna
 }
 
 void Parser::handleModeCommand(User* user, const std::vector<std::string>& args) {
-    if (args.size() < 1) {
-        user->send_reply(ERR_NEEDMOREPARAMS("MODE"));
-        return;
-    }
+	if (args.size() < 1) {
+		user->send_reply(ERR_NEEDMOREPARAMS("MODE"));
+		return;
+	}
 
-    const std::string& target = args[0];
-    
-    if (target[0] != '#') {
-        user->send_reply(ERR_NOSUCHCHANNEL(target));
-        return;
-    }
-    std::map<std::string, Channel>::iterator it = channels.find(target);
-    if (it == channels.end())
+	const std::string& target = args[0];
+	
+	if (target[0] != '#') {
+		user->send_reply(ERR_NOSUCHCHANNEL(target));
+		return;
+	}
+	std::map<std::string, Channel>::iterator it = channels.find(target);
+	if (it == channels.end())
 		user->send_reply(ERR_NOSUCHCHANNEL(target));
 	else{
 	Channel &channel = it->second;
 
-    if (args.size() == 1) {
-        std::string modeStr = "+" + channel.get_modes();
-        if (channel.has_mode(std::string("k"))) modeStr += " " + channel.get_key();
-        if (channel.has_mode(std::string("l")))
+	if (args.size() == 1) {
+		std::string modeStr = "+" + channel.get_modes();
+		if (channel.has_mode(std::string("k"))) modeStr += " " + channel.get_key();
+		if (channel.has_mode(std::string("l")))
 		{
 			std::ostringstream oss;
 			oss << channel.get_user_limit();
 			modeStr += " " + oss.str();
 		}
-        
-        user->send_reply(RPL_CHANGEMODE(user->get_nick_name(), target, modeStr));
-        return;
-    }
-
-    if (!channel.is_operator(user)) {
-        user->send_reply(ERR_CHANOPRIVSNEEDED(target));
-        return;
-    }
-    const std::string& modestring = args[1];
-    std::vector<std::string> modeArgs(args.begin() + 2, args.end());
-    size_t argIndex = 0;
-    char currentAction = '+';
-
-    for (size_t i = 0; i < modestring.length(); ++i) {
-		char c = modestring[i];
-        if (c == '+' || c == '-') {
-            currentAction = c;
-            continue;
-        }
-
-        switch (c) {
-            case 'i':
-            case 't':
-                channel.set_mode(std::string(1,c), currentAction == '+');
-                break;
-                
-            case 'k':
-                if (currentAction == '+') {
-                    if (argIndex < modeArgs.size()) {
-                        channel.set_key_mode(modeArgs[argIndex++], 1);
-                    }
-                } else {
-                    channel.set_key_mode("", 0);
-                }
-                break;
-                
-            case 'l':
-                if (currentAction == '+') {
-                    if (argIndex < modeArgs.size()) {
-                        channel.set_user_limits(1,std::atoi(modeArgs[argIndex++].c_str()));
-                    }
-                } else {
-                    channel.set_user_limits(0,0);
-                }
-                break;
-                
-            case 'o': {
-                if (argIndex < modeArgs.size()) {
-                    User* targetUser = find_user_by_nickname(channel, modeArgs[argIndex++]);
-                    if (targetUser) {
-                        if (currentAction == '+') {
-                            channel.set_operators_mode(1,targetUser);
-                        } else {
-                            channel.remove_operator(targetUser);
-                        }
-                    }
-                }
-                break;
-            }
-                
-            default:
-                user->send_reply(ERR_UNKNOWNMODE(user->get_nick_name(), target, std::string(1,c)));
-                continue;
-        }
+		
+		user->send_reply(RPL_CHANGEMODE(user->get_nick_name(), target, modeStr));
+		return;
 	}
-    }
+
+	if (!channel.is_operator(user)) {
+		user->send_reply(ERR_CHANOPRIVSNEEDED(target));
+		return;
+	}
+	const std::string& modestring = args[1];
+	std::vector<std::string> modeArgs(args.begin() + 2, args.end());
+	size_t argIndex = 0;
+	char currentAction = '+';
+
+	for (size_t i = 0; i < modestring.length(); ++i) {
+		char c = modestring[i];
+		if (c == '+' || c == '-') {
+			currentAction = c;
+			continue;
+		}
+
+		switch (c) {
+			case 'i':
+			case 't':
+				channel.set_mode(std::string(1,c), currentAction == '+');
+				break;
+				
+			case 'k':
+				if (currentAction == '+') {
+					if (argIndex < modeArgs.size()) {
+						channel.set_key_mode(modeArgs[argIndex++], 1);
+					}
+				} else {
+					channel.set_key_mode("", 0);
+				}
+				break;
+				
+			case 'l':
+				if (currentAction == '+') {
+					if (argIndex < modeArgs.size()) {
+						channel.set_user_limits(1,std::atoi(modeArgs[argIndex++].c_str()));
+					}
+				} else {
+					channel.set_user_limits(0,0);
+				}
+				break;
+				
+			case 'o': {
+				if (argIndex < modeArgs.size()) {
+					User* targetUser = find_user_by_nickname(channel, modeArgs[argIndex++]);
+					if (targetUser) {
+						if (currentAction == '+') {
+							channel.set_operators_mode(1,targetUser);
+						} else {
+							channel.remove_operator(targetUser);
+						}
+					}
+				}
+				break;
+			}
+				
+			default:
+				user->send_reply(ERR_UNKNOWNMODE(user->get_nick_name(), target, std::string(1,c)));
+				continue;
+		}
+	}
+	}
 }
 
 
@@ -558,18 +618,18 @@ void Parser::handleModeCommand(User* user, const std::vector<std::string>& args)
 
 std::ostream& operator<<(std::ostream& os, const cmd_line& c)
 {
-    os << "Command: " << c.cmd << std::endl;
-    
-    if (!c.args.empty())
+	os << "Command: " << c.cmd << std::endl;
+	
+	if (!c.args.empty())
 	{
-        os << "Arguments:";
-        for (size_t i = 0; i < c.args.size(); ++i)
-            os << " " << c.args[i];
-        os << std::endl;
-    }
-    
-    if (!c.trailing.empty())
-        os << "Trailing: " << c.trailing << std::endl;
+		os << "Arguments:";
+		for (size_t i = 0; i < c.args.size(); ++i)
+			os << " " << c.args[i];
+		os << std::endl;
+	}
+	
+	if (!c.trailing.empty())
+		os << "Trailing: " << c.trailing << std::endl;
 
-    return os;
+	return os;
 }
