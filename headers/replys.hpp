@@ -46,5 +46,6 @@
 #define RPL_CHANGEMODE(hostname, channelname, mode)(":" + hostname + " MODE " + channelname + " " + mode + POSTFIX)
 #define RPL_UMODEIS(hostname, channelname, mode, user)":" + hostname + " MODE " + channelname + " " + mode + " " + user + POSTFIX
 #define RPL_PONG(server_name, token) "PONG " + server_name + token + POSTFIX
+#define RPL_KICK(sender, target, channel)":" + sender + " KICK " + target + " " + channel + POSTFIX
 
 #endif

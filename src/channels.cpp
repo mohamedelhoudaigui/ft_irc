@@ -44,6 +44,10 @@ void Channel::add_user(User* user) {
     users.push_back(user);
 }
 
+void Channel::remove_user(User* user) {
+    users.erase(std::remove(users.begin(), users.end(), user), users.end());
+}
+
 bool Channel::is_operator(User *user)
 {
     return std::find(operators.begin(), operators.end(), user) != operators.end();

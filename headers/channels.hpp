@@ -39,6 +39,7 @@ class Channel{
     void add_user(User* user);
     std::string get_topic_author() const;
     time_t get_topic_time() const;
+    void remove_user(User* user);
 
     std::string get_modes() const;
     std::string get_key() const;
