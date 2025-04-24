@@ -463,14 +463,14 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			}
 		}
 	}
-	// else if (cmd == "TOPIC")
-	// {
-	// 	if (args.size() != 1)
-	// 		user.send_reply(ERR_NEEDMOREPARAMS(std::string("TOPIC")));
-	// 	else
-	// 		topic_command(args[0], trailing, user);
+	else if (cmd == "TOPIC")
+	{
+		if (args.size() != 1)
+			user.send_reply(ERR_NEEDMOREPARAMS(std::string("TOPIC")));
+		else
+			topic_command(args[0], trailing, user);
 		
-	// }
+	}
 	else if (cmd == "MODE")
 	{
 		handleModeCommand(&user, args);
@@ -518,29 +518,49 @@ void Parser::privmsg(int fd, std::string receiver, std::string msg, User &user)
 	}
 }
 
-// void	Parser::topic_command(std::string channel_name, std::string new_topic, User* user){
-// 	if (channel_name.empty())
-// 		return ;
-// 	std::map<std::string, Channel>::iterator it = channels.find(channel_name);
-//     if (it != channels.end())
-//     {
-//         Channel &channel = it->second;
-//         const std::vector<User *> &channel_users = channel.get_users();
-//         channel_users::iterator it = users.find(user);
-// 		if (it == users.end())
-// 			send_reply(ERR_NOTONCHANNEL(user, channel));
-// 		else{
-// 			if (!new_topic.empty())
-// 				channel.set_topic(new_topic, user.get_nick_name());
-// 			else if (new_topic == "")
-// 				channel.set_topic("", user.get_nick_name());
-// 			else if (new_topic.empty())
-// 				std::cout << channel.get_topic() << std::endl;
-// 		}
-//     }
-//     else
-//         user.send_reply(ERR_NOSUCHCHANNEL(receiver));
-// }
+void Parser::topic_command(std::string channel_name, std::string new_topic, User& user) {
+    if (channel_name.empty())
+        return;
+    
+    std::map<std::string, Channel>::iterator it = channels.find(channel_name);
+    if (it != channels.end()) {
+        Channel &channel = it->second;
+        const std::vector<User*> &channel_users = channel.get_users();
+        bool user_in_channel = false;
+        for (size_t i = 0; i < channel_users.size(); i++) {
+            if (channel_users[i]->get_nick_name() == user.get_nick_name()) {
+                user_in_channel = true;
+                break;
+            }
+        }
+        
+        if (!user_in_channel) {
+            user.send_reply(ERR_NOTONCHANNEL(user.get_nick_name(), channel_name));
+        } else {
+            if (!new_topic.empty() || new_topic == "") {
+                if (channel.has_mode('t') && !channel.is_operator(&user)) {
+                    user.send_reply(ERR_CHANOPRIVSNEEDED(channel_name));
+                    return;
+                }
+                
+                channel.set_topic(new_topic, user.get_nick_name());
+                for (size_t i = 0; i < channel_users.size(); i++) {
+					std::string formatted_msg = ":" + user.get_nick_name() + " TOPIC " + channel_name + " :" + new_topic;
+                    send(channel_users[i]->get_fd(), formatted_msg.c_str(), formatted_msg.size(), 0);
+                }
+                return;
+            }
+            
+            if (channel.get_topic().empty()) {
+                user.send_reply(RPL_NOTOPIC(user.get_nick_name(), channel_name));
+            } else {
+                user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, channel.get_topic()));
+            }
+        }
+    } else {
+        user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+    }
+}
 
 User*    Parser::find_user_by_nickname(Channel &channel,const std::string nickname)
 {
@@ -577,7 +597,7 @@ void Channel::apply_modes(const std::string &mode_string, const std::vector<std:
             adding = true;
         else if (c == '-')
             adding = false;
-        else if (c == 'i' || c == 't')
+        else if (c == 'i')
         {
             set_mode(c, adding);
 			if (adding)
@@ -585,6 +605,8 @@ void Channel::apply_modes(const std::string &mode_string, const std::vector<std:
 			else
 				is_invite_only = false;
         }
+		else if (c == 't')
+			set_mode(c, adding);
         else if (c == 'k')
         {
             if (adding)

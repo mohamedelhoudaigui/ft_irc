@@ -48,4 +48,5 @@
 #define RPL_PONG(server_name, token) "PONG " + server_name + token + POSTFIX
 #define RPL_KICK(sender, target, channel)":" + sender + " KICK " + target + " " + channel + POSTFIX
 
+#define RPL_TOPICWHOTIME(nick, channel, setter, time) PREFIX "333 " + std::string(nick) + " " + std::string(channel) + " " + std::string(setter) + " " + std::string(time) + POSTFIX
 #endif

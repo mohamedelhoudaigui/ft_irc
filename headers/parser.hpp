@@ -60,7 +60,7 @@ class Parser
             void            privmsg(int fd, std::string receiver, std::string msg, User &user);
             void            topic(User &user, std::string channel_name, std::string new_topic, Channel &channel);
             void            handleModeCommand(User* user, std::vector<std::string>& args);
-            void	        topic_command(std::string channel_name, std::string new_topic, User* user);
+            void	        topic_command(std::string channel_name, std::string new_topic, User& user);
 
 
             User*           find_user_by_nickname(Channel &channel,const std::string nickname);
