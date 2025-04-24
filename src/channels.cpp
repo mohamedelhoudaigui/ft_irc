@@ -65,6 +65,17 @@ unsigned long Channel::get_user_limit(){
     return user_limits;
 }
 
+bool Channel::is_invited(User* user) {
+    return std::find(invited.begin(), invited.end(), user) != invited.end();
+}
+
+void Channel::add_invited(User* user) {
+    invited.push_back(user);
+}
+
+bool Channel::get_channel_status(void) const{
+    return is_invite_only;
+}
 
 //mode command
 

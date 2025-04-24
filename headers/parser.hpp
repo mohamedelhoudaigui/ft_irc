@@ -64,6 +64,7 @@ class Parser
 
 
             User*           find_user_by_nickname(Channel &channel,const std::string nickname);
+            User*           find_invited_user(const std::string nickname);
     private:
         std::string         server_password;
         std::vector<User>	users;

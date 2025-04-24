@@ -340,75 +340,89 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		
 	}
 	else if (cmd == "JOIN") {
-		if (args.size() != 1)
-			user.send_reply(ERR_NEEDMOREPARAMS(std::string("JOIN")));
+    if (args.size() != 1)
+        user.send_reply(ERR_NEEDMOREPARAMS(std::string("JOIN")));
+    else
+    {
+        std::string channel_name = args[0];
+        if (channel_name[0] != '#')
+            user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+        else
+        {
+            std::map<std::string, Channel>::iterator it = channels.find(channel_name);
+            if (it != channels.end())
+            {
+                Channel &existing_channel = it->second;
+				if (existing_channel.get_channel_status() && !existing_channel.is_invited(&user)) {
+					user.send_reply(ERR_INVITEONLYCHAN(user.get_nick_name(), channel_name));
+					return;
+				}
+                bool userAlreadyInChannel = false;
+                const std::vector<User *> &current_users = existing_channel.get_users();
+                for (size_t i = 0; i < current_users.size(); i++) {
+                    if (current_users[i]->get_fd() == user.get_fd()) {
+                        userAlreadyInChannel = true;
+                        break;
+                    }
+                }
+                if (!userAlreadyInChannel) {
+                    existing_channel.add_user(&user);
+                }
+            }
+            else
+            {
+                Channel new_channel;
+                channels[channel_name] = new_channel;
+                Channel &channel_ref = channels[channel_name];
+                channel_ref.add_user(&user);
+                channel_ref.set_operators_mode(1, &user);
+            }
+            
+            user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
+        }
+    }
+}
+	else if (cmd == "INVITE") {
+	if (args.size() != 2)
+		user.send_reply(ERR_NEEDMOREPARAMS(std::string("INVITE")));
+	else
+	{
+		std::string invited = args[0];
+		std::string channel_name = args[1];
+
+		if (channel_name[0] != '#') {
+			user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+		}
 		else
 		{
-			std::string channel_name = args[0];
-			if (channel_name[0] != '#')
-				user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
-			else
+			std::map<std::string, Channel>::iterator it = channels.find(channel_name);
+			if (it != channels.end())
 			{
-				std::map<std::string, Channel>::iterator it = channels.find(channel_name);
-				if (it != channels.end())
-				{
-					Channel &existing_channel = it->second;
-					bool userAlreadyInChannel = false;
-					const std::vector<User *> &current_users = existing_channel.get_users();
-					for (size_t i = 0; i < current_users.size(); i++) {
-						if (current_users[i]->get_fd() == user.get_fd()) {
-							userAlreadyInChannel = true;
-							break;
-						}
-					}
-					if (!userAlreadyInChannel) {
-						existing_channel.add_user(&user);
-					}
-				}
-				else
-				{
-					Channel new_channel;
-					channels[channel_name] = new_channel;
-					Channel &channel_ref = channels[channel_name];
-					channel_ref.add_user(&user);
-					channel_ref.set_operators_mode(1, &user);
+				Channel &channel = it->second;
+				if (!channel.is_operator(&user)) {
+					user.send_reply(ERR_CHANOPRIVSNEEDED(channel_name));
+					return;
 				}
 				
-				user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
-			}
-		}
-	}
-	else if (cmd == "INVITE") {
-		if (args.size() != 2)
-			user.send_reply(ERR_NEEDMOREPARAMS(std::string("INVITE")));
-		else
-		{
-			std::string invited = args[0];
-			std::string channel_name = args[1];
-
-			if (channel_name[0] != '#')
-				user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
-			else
-			{
-				std::map<std::string, Channel>::iterator it = channels.find(channel_name);
-				if (it != channels.end())
+				User *selected_user = find_invited_user(invited);
+				
+				if (selected_user)
 				{
-					Channel &channel = it->second;
-					User *selected_user = find_user_by_nickname(channel, invited);
-					if (selected_user)
-					{
-						channel.add_user(selected_user);
-						selected_user->send_reply(RPL_INVITE(user.get_nick_name(), invited, channel_name));
-					}
-					else
-						user.send_reply(ERR_NOSUCHNICK(invited));
+					channel.add_invited(selected_user);
+					selected_user->send_reply(RPL_INVITE(user.get_nick_name(), invited, channel_name));
+					user.send_reply(RPL_INVITING(user.get_nick_name(), invited, channel_name));
 				}
-				else
-					user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+				else {
+					user.send_reply(ERR_NOSUCHNICK(invited));
+				}
+			}
+			else {
+				user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
 			}
 		}
 	}
-	else if (cmd == "KICK") {  // remove kicked user from operator list if possible aslan
+}
+	else if (cmd == "KICK") {
 		if (args.size() != 2)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("KICK")));
 		else {
@@ -429,7 +443,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 						user.send_reply(ERR_CHANOPRIVSNEEDED(channel_name));
 						return;
 					}
-					User *selected_user = find_user_by_nickname(channel, kicked);
+					User *selected_user = find_user_by_nickname(it->second, kicked);
 					if (selected_user) {
 						std::string kick_message = ":" + user.get_nick_name() + "!" + user.get_user_name() 
 						+ "@localhost KICK " + channel_name + " " + kicked + " :Kicked by " 
@@ -536,6 +550,16 @@ User*    Parser::find_user_by_nickname(Channel &channel,const std::string nickna
 		User *target = user[i];
 		if (target->get_nick_name() == nickname)
 			return target;
+	}
+	return NULL;
+}
+
+User*	Parser::find_invited_user(const std::string nickname)
+{
+	for (size_t i = 0; i < users.size(); ++i)
+	{
+		if (users[i].get_nick_name() == nickname)
+			return &users[i];
 	}
 	return NULL;
 }
