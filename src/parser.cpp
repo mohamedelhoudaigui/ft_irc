@@ -408,7 +408,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			}
 		}
 	}
-	else if (cmd == "KICK") {
+	else if (cmd == "KICK") {  // remove kicked user from operator list if possible aslan
 		if (args.size() != 2)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("KICK")));
 		else {
@@ -540,104 +540,104 @@ User*    Parser::find_user_by_nickname(Channel &channel,const std::string nickna
 	return NULL;
 }
 
-void Parser::handleModeCommand(User* user, const std::vector<std::string>& args) {
+
+void Channel::apply_modes(const std::string &mode_string, const std::vector<std::string> &params, Parser &parser)
+{
+    bool adding = true;
+    size_t param_index = 0;
+
+    for (size_t i = 0; i < mode_string.length(); ++i)
+    {
+        char c = mode_string[i];
+        if (c == '+')
+            adding = true;
+        else if (c == '-')
+            adding = false;
+        else if (c == 'i' || c == 't')
+        {
+            set_mode(c, adding);
+			if (adding)
+				is_invite_only = true;
+			else
+				is_invite_only = false;
+        }
+        else if (c == 'k')
+        {
+            if (adding)
+            {
+                if (param_index >= params.size())
+					break;
+                set_key_mode(params[param_index], true);
+                param_index++;
+            }
+            else
+            {
+                set_key_mode("", false);
+            }
+        }
+        else if (c == 'o')
+        {
+            if (param_index >= params.size())
+				break;
+            User *target = parser.find_user_by_nickname(*this, params[param_index]);
+            if (target)
+                set_operators_mode(adding, target);
+            param_index++;
+        }
+        else if (c == 'l')
+        {
+            if (adding)
+            {
+                if (param_index >= params.size()) break;
+                unsigned long limit = strtoul(params[param_index].c_str(), NULL, 10);
+                set_user_limits(true, limit);
+                param_index++;
+            }
+            else
+            {
+                set_user_limits(false, 0);
+            }
+        }
+    }
+}
+
+
+
+void Parser::handleModeCommand(User* user, std::vector<std::string>& args)
+{
 	if (args.size() < 1) {
 		user->send_reply(ERR_NEEDMOREPARAMS("MODE"));
 		return;
 	}
-
 	const std::string& target = args[0];
 	
 	if (target[0] != '#') {
 		user->send_reply(ERR_NOSUCHCHANNEL(target));
 		return;
 	}
+
+    std::string channel_name = args[0];
+    std::string mode_string = args[1];
+    std::vector<std::string> mode_args;
+
+    for (size_t i = 2; i < args.size(); ++i){
+        mode_args.push_back(args[i]);
+	}
+
+
 	std::map<std::string, Channel>::iterator it = channels.find(target);
 	if (it == channels.end())
 		user->send_reply(ERR_NOSUCHCHANNEL(target));
 	else{
 	Channel &channel = it->second;
 
-	if (args.size() == 1) {
-		std::string modeStr = "+" + channel.get_modes();
-		if (channel.has_mode(std::string("k"))) modeStr += " " + channel.get_key();
-		if (channel.has_mode(std::string("l")))
-		{
-			std::ostringstream oss;
-			oss << channel.get_user_limit();
-			modeStr += " " + oss.str();
-		}
-		
-		user->send_reply(RPL_CHANGEMODE(user->get_nick_name(), target, modeStr));
-		return;
-	}
-
-	if (!channel.is_operator(user)) {
+	if (!channel.is_operator(user)){
 		user->send_reply(ERR_CHANOPRIVSNEEDED(target));
 		return;
 	}
-	const std::string& modestring = args[1];
-	std::vector<std::string> modeArgs(args.begin() + 2, args.end());
-	size_t argIndex = 0;
-	char currentAction = '+';
-
-	for (size_t i = 0; i < modestring.length(); ++i) {
-		char c = modestring[i];
-		if (c == '+' || c == '-') {
-			currentAction = c;
-			continue;
-		}
-
-		switch (c) {
-			case 'i':
-			case 't':
-				channel.set_mode(std::string(1,c), currentAction == '+');
-				break;
-				
-			case 'k':
-				if (currentAction == '+') {
-					if (argIndex < modeArgs.size()) {
-						channel.set_key_mode(modeArgs[argIndex++], 1);
-					}
-				} else {
-					channel.set_key_mode("", 0);
-				}
-				break;
-				
-			case 'l':
-				if (currentAction == '+') {
-					if (argIndex < modeArgs.size()) {
-						channel.set_user_limits(1,std::atoi(modeArgs[argIndex++].c_str()));
-					}
-				} else {
-					channel.set_user_limits(0,0);
-				}
-				break;
-				
-			case 'o': {
-				if (argIndex < modeArgs.size()) {
-					User* targetUser = find_user_by_nickname(channel, modeArgs[argIndex++]);
-					if (targetUser) {
-						if (currentAction == '+') {
-							channel.set_operators_mode(1,targetUser);
-						} else {
-							channel.remove_operator(targetUser);
-						}
-					}
-				}
-				break;
-			}
-				
-			default:
-				user->send_reply(ERR_UNKNOWNMODE(user->get_nick_name(), target, std::string(1,c)));
-				continue;
-		}
-	}
+	channel.apply_modes(mode_string, mode_args, *this);
 	}
 }
-
-
-
 
 // -------------------------------
 

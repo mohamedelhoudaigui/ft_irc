@@ -62,67 +62,58 @@ std::string Channel::get_key() const{
 }
 
 unsigned long Channel::get_user_limit(){
-    return user_limts;
+    return user_limits;
 }
 
 
 //mode command
 
 
-bool Channel::has_mode(std::string mode){
+bool Channel::has_mode(char mode){
     return (modes.find(mode) != std::string::npos);
 }
 
-void Channel::set_mode(std::string mode, bool add){
+void Channel::set_mode(char mode, bool add){
     if (add && !has_mode(mode))
         modes += mode;
-    else if (!add){
-        std::string::size_type pos = modes.find(mode[0]);
-        if (pos != std::string::npos)
-            modes.erase(pos, 1);
-    }
+    else if (!add)
+        modes.erase(std::remove(modes.begin(), modes.end(), mode), modes.end());
 }
 
-void Channel::set_key_mode(std::string key, bool add){
-    if (add)
-    {
+void Channel::set_key_mode(std::string key, bool add) {
+    if (add) {
         this->key = key;
-        if (!has_mode(std::string(1,'k')))
-            modes += 'k';
-    }
-    else {
-        this->key = "";
-        std::string::size_type pos = modes.find('k');
-        if (pos != std::string::npos)
-            modes.erase(pos, 1);
+        set_mode('k', true);
+    } else {
+        this->key.clear();
+        set_mode('k', false);
     }
 }
 
-void Channel::set_user_limits(bool add, unsigned long limit){
-    if (add){
-        this->user_limts = limit;
-        if (!has_mode(std::string(1,'l')))
-            modes += 'l';
-    }
-    else{
-        this->user_limts = 0;
-        std::string::size_type pos = modes.find('l');
-        if (pos != std::string::npos)
-            modes.erase(pos, 1);
+
+void Channel::set_user_limits(bool add, unsigned long limit) {
+    if (add) {
+        user_limits = limit;
+        set_mode('l', true);
+    } else {
+        user_limits = 0;
+        set_mode('l', false);
     }
 }
 
-void Channel::set_operators_mode(bool add, User *user){
-    if (add){
-        if (std::find(operators.begin(), operators.end(), user) == operators.end())
+
+void Channel::set_operators_mode(bool add, User *user) {
+    if (add) {
+        if (!is_operator(user))
             operators.push_back(user);
-    }
-    else{
-        std::vector<User*>::iterator it = std::find(operators.begin(), operators.end(), user);
-        if (it != operators.end())
-            operators.erase(it);
+        set_mode('o', true);
+    } else {
+        remove_operator(user);
+        if (operators.empty())
+            set_mode('o', false);
     }
 }
+
 
 
 void Channel::remove_operator(User *user)

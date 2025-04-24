@@ -6,7 +6,7 @@
 #include <ctime>
 
 class User;
-
+class Parser;
 class Channel{
     std::string name;
     std::vector<User *> users;
@@ -18,10 +18,10 @@ class Channel{
 
 
     //Needed fo mode command
+    bool is_invite_only;
     std::string modes;
     std::string key;
-    unsigned long user_limts;
-    // std::vector<std::string> bans;
+    unsigned long user_limits;
     std::vector<User *> operators;
 
     std::string creationTime;
@@ -47,13 +47,13 @@ class Channel{
 
     bool is_operator(User *user);
 
-    bool has_mode(std::string mode);
-    void set_mode(std::string mode, bool add);
+    bool has_mode(char mode);
+    void set_mode(char mode, bool add);
     void set_key_mode(std::string key, bool add);
     void set_user_limits(bool add, unsigned long limit);
     void set_operators_mode(bool add, User *user);
     void remove_operator(User *user);
-
+    void apply_modes(const std::string &mode_string, const std::vector<std::string> &params, Parser &parser);
     
 };
 
