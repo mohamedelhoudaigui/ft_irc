@@ -44,7 +44,7 @@
 #define RPL_JOINMSG(hostname, ipaddress, channel)(":" + hostname + "@" + ipaddress + " JOIN " + channel + POSTFIX)
 #define RPL_JOIN(sender, channel)":" + sender + " JOIN :" + channel + POSTFIX
 #define RPL_CHANNELMODEIS(hostname, channel, mode)(":" + hostname + " MODE " + channel + " " + mode + POSTFIX)
-#define RPL_UMODEIS(hostname, channel, mode, user)":" + hostname + " MODE " + channel + " " + mode + " " + user + POSTFIX
+#define RPL_UMODEIS(hostname, channel, mode, user) ":" + std::string(hostname) + " MODE " + std::string(channel) + " " + std::string(mode) + " " + std::string(user) + POSTFIX
 #define RPL_PONG(server_name, token) "PONG " + server_name + token + POSTFIX
 #define RPL_KICK(sender, target, channel)":" + sender + " KICK " + target + " " + channel + POSTFIX
 

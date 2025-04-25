@@ -597,7 +597,7 @@ User*	Parser::find_invited_user(const std::string nickname)
 }
 
 
-void Channel::apply_modes(const std::string &mode_string, const std::vector<std::string> &params, Parser &parser)
+void Channel::apply_modes(const std::string &mode_string, const std::vector<std::string> &params, Parser &parser, User *user, Channel& channel)
 {
 	bool adding = true;
 	size_t param_index = 0;
@@ -656,6 +656,9 @@ void Channel::apply_modes(const std::string &mode_string, const std::vector<std:
 				set_user_limits(false, 0);
 			}
 		}
+		else{
+			user->send_reply(ERR_UNKNOWNMODE(user->get_nick_name(), channel.get_name(), c));
+		}
 	}
 }
 
@@ -675,26 +678,28 @@ void Parser::handleModeCommand(User* user, std::vector<std::string>& args)
 	}
 
 	std::string channel_name = args[0];
+	
+	
+	std::map<std::string, Channel>::iterator it = channels.find(target);
+	if (it == channels.end()){
+		user->send_reply(ERR_NOSUCHCHANNEL(target));
+		return ;
+	}
+	Channel &channel = it->second;
+	if (args.size() < 2){
+		user->send_reply(RPL_UMODEIS(user->get_nick_name(), channel.get_name(), channel.get_modes(), user->get_nick_name()));
+		return ;
+	}
 	std::string mode_string = args[1];
 	std::vector<std::string> mode_args;
-
 	for (size_t i = 2; i < args.size(); ++i){
 		mode_args.push_back(args[i]);
 	}
-
-
-	std::map<std::string, Channel>::iterator it = channels.find(target);
-	if (it == channels.end())
-		user->send_reply(ERR_NOSUCHCHANNEL(target));
-	else{
-	Channel &channel = it->second;
-
 	if (!channel.is_operator(user)){
 		user->send_reply(ERR_CHANOPRIVSNEEDED(target));
 		return;
 	}
-	channel.apply_modes(mode_string, mode_args, *this);
-	}
+	channel.apply_modes(mode_string, mode_args, *this, user, channel);
 }
 
 // -------------------------------

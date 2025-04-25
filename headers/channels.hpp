@@ -58,6 +58,6 @@ class Channel{
         void set_user_limits(bool add, unsigned long limit);
         void set_operators_mode(bool add, User *user);
         void remove_operator(User *user);
-        void apply_modes(const std::string &mode_string, const std::vector<std::string> &params, Parser &parser);
+        void apply_modes(const std::string &mode_string, const std::vector<std::string> &params, Parser &parser, User *user, Channel& channel);
 };
 
