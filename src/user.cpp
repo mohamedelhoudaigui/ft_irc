@@ -5,6 +5,7 @@
 User::User():
                     fd(-1),
                     ip_address(""),
+                    steps(0),
                     auth(false),
                     user_name(""),
                     real_name(""),
@@ -15,6 +16,7 @@ User::User():
 User::User(int _fd):
                     fd(_fd),
                     ip_address(get_socket_address()),
+                    steps(0),
                     auth(false),
                     user_name(""),
                     real_name(""),
@@ -150,4 +152,14 @@ bool    User::get_auth()
 void    User::set_auth(bool a)
 {
     this->auth = a;
+}
+
+int     User::get_auth_steps()
+{
+    return (steps);
+}
+
+void    User::add_auth_step()
+{
+    this->steps += 1;
 }

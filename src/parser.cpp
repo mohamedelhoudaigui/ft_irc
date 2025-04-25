@@ -241,6 +241,20 @@ void Parser::parse(User &user) {
 	}
 }
 
+void	Parser::process_auth(User & user)
+{
+	if (!user.get_auth())
+		user.add_auth_step();
+	else
+		return ;
+
+	if (user.get_auth_steps() == 3)
+	{
+		user.send_reply(RPL_WELCOME(user.get_nick_name(), std::string("welcome to irc server !")));
+		user.set_auth(true);
+	}
+}
+
 void	Parser::redirect_cmd(User & user, cmd_line & c)
 {
 	std::string					cmd = c.cmd;
@@ -256,7 +270,9 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		else if (args[0] != server_password)
 			user.send_reply(ERR_PASSWDMISMATCH(user.get_nick_name()));
 		else
-			user.set_auth(true);
+		{
+			process_auth(user);
+		}
 	}
 
 	else if (cmd == "NICK")
@@ -274,6 +290,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			std::string old_nick = user.get_nick_name();
 			user.set_nick_name(args[0]);
 			user.send_reply(RPL_NICK(old_nick, user.get_nick_name()));
+
+			process_auth(user);
 		}
 	}
 
@@ -294,6 +312,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			{
 				user.set_real_name("~" + real_name);
 				user.set_user_name(user_name);
+
+				process_auth(user);
 			}
 			else
 				user.send_reply(ERR_NEEDMOREPARAMS(std::string("USER")));
@@ -308,8 +328,6 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("CAP")));
 		else if (args[0] == "LS")
         	user.send_reply(":localhost CAP * ACK :\r\n");
-		else if (args[0] == "END" && user.get_auth())
-			user.send_reply(RPL_WELCOME(user.get_nick_name(), std::string("Welcome to the irc server !")));
 	}
 
 	else if (cmd == "QUIT")
@@ -327,7 +345,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("PING")));
 		else
 		{
-			std::string	server_name = "rgerggre";
+			std::string	server_name = "localhost";
 			std::string	token = args[0];
 			user.send_reply(RPL_PONG(server_name, args[0]));
 		}

@@ -53,6 +53,7 @@ class Parser
             bool			check_user(int fd);
             bool			check_nick_name(std::string nick);
 
+            void	        process_auth(User & user);
 
     private:
         std::string         server_password;

@@ -47,12 +47,16 @@ class User
 		bool			get_auth();
 		void			set_auth(bool a);
 
+		int				get_auth_steps();
+		void			add_auth_step();
+
 		void			send_reply(std::string reply);
 		
 		private:
 			int				fd;
 			std::string		ip_address;
 
+			int				steps;
 			bool			auth;
 
 			std::string 	user_name;
