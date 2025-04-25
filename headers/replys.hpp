@@ -23,12 +23,12 @@
 #define ERR_ALREADYREGISTRED(target)PREFIX "462 " + target + ":You may not reregister" POSTFIX 
 #define ERR_CHANNELISFULL(client, channel)PREFIX " 471 " + client + " " + channel + " :Cannot join channel (+l)" POSTFIX
 #define ERR_INVITEONLYCHAN(client, channel)PREFIX " 473 " + client + " " + channel + " :Cannot join channel (+i)" POSTFIX
-#define ERR_NEEDMODEPARM(channelname, mode)(std::string(": 696 ") + channelname + " * You must specify a parameter for the key mode. " + mode + POSTFIX)
-#define ERR_INVALIDMODEPARM(channelname, mode)(std::string(": 696 ") + channelname + " Invalid mode parameter. " + mode + POSTFIX)
-#define ERR_UNKNOWNMODE(nickname, channelname, mode)(std::string(": 472 ") + nickname + " " + channelname + " " + mode + " :is not a recognized channel mode" + POSTFIX)
+#define ERR_NEEDMODEPARM(channel, mode)(std::string(": 696 ") + channel + " * You must specify a parameter for the key mode. " + mode + POSTFIX)
+#define ERR_INVALIDMODEPARM(channel, mode)(std::string(": 696 ") + channel + " Invalid mode parameter. " + mode + POSTFIX)
+#define ERR_UNKNOWNMODE(nickname, channel, mode)(std::string(": 472 ") + nickname + " " + channel + " " + mode + " :is not a recognized channel mode" + POSTFIX)
 #define ERR_INCORPASS(nickname)(": 464 " + nickname + " :Password incorrect !" + POSTFIX )
 #define ERR_NOTREGISTERED(nickname)(": 464 " + nickname + " :You are not registered !" + POSTFIX )
-
+#define ERR_BADCHANNELKEY(nickname, channel)(": 475 " + nickname + " " + channel + " :Cannot join channel (+k)" + POSTFIX)
 //Replies :
 
 #define RPL_WELCOME(sender, msg) PREFIX "001 " + sender + " : " + msg + POSTFIX 
@@ -41,10 +41,10 @@
 #define RPL_INVITING(nickname, targnick, targchan)  ": 341 " + nickname + " " + targnick + " " + targchan + POSTFIX
 #define RPL_INVITE(sender, target, channel)":" + sender + " INVITE " + target + " " + channel + POSTFIX
 #define RPL_INVITING(nickname, targnick, targchan)  ": 341 " + nickname + " " + targnick + " " + targchan + POSTFIX
-#define RPL_JOINMSG(hostname, ipaddress, channelname)(":" + hostname + "@" + ipaddress + " JOIN " + channelname + POSTFIX)
+#define RPL_JOINMSG(hostname, ipaddress, channel)(":" + hostname + "@" + ipaddress + " JOIN " + channel + POSTFIX)
 #define RPL_JOIN(sender, channel)":" + sender + " JOIN :" + channel + POSTFIX
-#define RPL_CHANNELMODEIS(hostname, channelname, mode)(":" + hostname + " MODE " + channelname + " " + mode + POSTFIX)
-#define RPL_UMODEIS(hostname, channelname, mode, user)":" + hostname + " MODE " + channelname + " " + mode + " " + user + POSTFIX
+#define RPL_CHANNELMODEIS(hostname, channel, mode)(":" + hostname + " MODE " + channel + " " + mode + POSTFIX)
+#define RPL_UMODEIS(hostname, channel, mode, user)":" + hostname + " MODE " + channel + " " + mode + " " + user + POSTFIX
 #define RPL_PONG(server_name, token) "PONG " + server_name + token + POSTFIX
 #define RPL_KICK(sender, target, channel)":" + sender + " KICK " + target + " " + channel + POSTFIX
 
