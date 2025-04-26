@@ -9,7 +9,7 @@
 #define ERR_ERRONEUSNICKNAME(nick)PREFIX "432 " + nick + " :Erroneus nickname" POSTFIX 
 #define ERR_NICKNAMEINUSE(target)PREFIX "433 " + target + " :Nickname is already in use" POSTFIX 
 #define ERR_NONICKNAMEGIVEN(target)PREFIX "431 " + target + " :No nickname given" POSTFIX 
-#define ERR_NEEDMOREPARAMS(command)PREFIX "461 " + command + " :Not enough parameters" POSTFIX  
+#define ERR_NEEDMOREPARAMS(command) (std::string(PREFIX) + "461 " + command + " :Not enough parameters" + POSTFIX) 
 #define ERR_PASSWDMISMATCH(target)PREFIX "464 " + target + ":Password incorrect" POSTFIX 
 #define ERR_NOAUTH(target)PREFIX "464 " + target + ":Not authenticated" POSTFIX
 #define ERR_ALREADYREGISTERED(target)PREFIX "462 " + target + " :You may not reregister" POSTFIX 
@@ -23,12 +23,12 @@
 #define ERR_ALREADYREGISTRED(target)PREFIX "462 " + target + ":You may not reregister" POSTFIX 
 #define ERR_CHANNELISFULL(client, channel)PREFIX " 471 " + client + " " + channel + " :Cannot join channel (+l)" POSTFIX
 #define ERR_INVITEONLYCHAN(client, channel)PREFIX " 473 " + client + " " + channel + " :Cannot join channel (+i)" POSTFIX
-#define ERR_NEEDMODEPARM(channelname, mode)(std::string(": 696 ") + channelname + " * You must specify a parameter for the key mode. " + mode + POSTFIX)
-#define ERR_INVALIDMODEPARM(channelname, mode)(std::string(": 696 ") + channelname + " Invalid mode parameter. " + mode + POSTFIX)
-#define ERR_UNKNOWNMODE(nickname, channelname, mode)(std::string(": 472 ") + nickname + " " + channelname + " " + mode + " :is not a recognized channel mode" + POSTFIX)
+#define ERR_NEEDMODEPARM(channel, mode)(std::string(": 696 ") + channel + " * You must specify a parameter for the key mode. " + mode + POSTFIX)
+#define ERR_INVALIDMODEPARM(channel, mode)(std::string(": 696 ") + channel + " Invalid mode parameter. " + mode + POSTFIX)
+#define ERR_UNKNOWNMODE(nickname, channel, mode)(std::string(": 472 ") + nickname + " " + channel + " " + mode + " :is not a recognized channel mode" + POSTFIX)
 #define ERR_INCORPASS(nickname)(": 464 " + nickname + " :Password incorrect !" + POSTFIX )
 #define ERR_NOTREGISTERED(nickname)(": 464 " + nickname + " :You are not registered !" + POSTFIX )
-
+#define ERR_BADCHANNELKEY(nickname, channel)(": 475 " + nickname + " " + channel + " :Cannot join channel (+k)" + POSTFIX)
 //Replies :
 
 #define RPL_WELCOME(sender, msg) PREFIX "001 " + sender + " : " + msg + POSTFIX 
@@ -41,10 +41,12 @@
 #define RPL_INVITING(nickname, targnick, targchan)  ": 341 " + nickname + " " + targnick + " " + targchan + POSTFIX
 #define RPL_INVITE(sender, target, channel)":" + sender + " INVITE " + target + " " + channel + POSTFIX
 #define RPL_INVITING(nickname, targnick, targchan)  ": 341 " + nickname + " " + targnick + " " + targchan + POSTFIX
-#define RPL_JOINMSG(hostname, ipaddress, channelname)(":" + hostname + "@" + ipaddress + " JOIN " + channelname + POSTFIX)
+#define RPL_JOINMSG(hostname, ipaddress, channel)(":" + hostname + "@" + ipaddress + " JOIN " + channel + POSTFIX)
 #define RPL_JOIN(sender, channel)":" + sender + " JOIN :" + channel + POSTFIX
-#define RPL_CHANGEMODE(hostname, channelname, mode)(":" + hostname + " MODE " + channelname + " " + mode + POSTFIX)
-#define RPL_UMODEIS(hostname, channelname, mode, user)":" + hostname + " MODE " + channelname + " " + mode + " " + user + POSTFIX
+#define RPL_CHANNELMODEIS(hostname, channel, mode)(":" + hostname + " MODE " + channel + " " + mode + POSTFIX)
+#define RPL_UMODEIS(hostname, channel, mode, user)":" + hostname + " MODE " + channel + " " + mode + " " + user + POSTFIX
 #define RPL_PONG(server_name, token) "PONG " + server_name + token + POSTFIX
+#define RPL_KICK(sender, target, channel)":" + sender + " KICK " + target + " " + channel + POSTFIX
 
+#define RPL_TOPICWHOTIME(nick, channel, setter, time) PREFIX "333 " + std::string(nick) + " " + std::string(channel) + " " + std::string(setter) + " " + std::string(time) + POSTFIX
 #endif
