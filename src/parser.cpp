@@ -340,60 +340,82 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		
 	}
 	else if (cmd == "JOIN") {
-	if (args.empty())
-		user.send_reply(ERR_NEEDMOREPARAMS(std::string("JOIN")));
-	else
-	{
-		std::string channel_name = args[0];
-		std::string provided_key = (args.size() > 1) ? args[1] : "";
-		if (channel_name[0] != '#')
-			user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+		if (args.empty())
+			user.send_reply(ERR_NEEDMOREPARAMS(std::string("JOIN")));
 		else
 		{
-			std::map<std::string, Channel>::iterator it = channels.find(channel_name);
-			if (it != channels.end())
-			{
-				Channel &existing_channel = it->second;
-				if (existing_channel.get_channel_status() && !existing_channel.is_invited(&user)) {
-					user.send_reply(ERR_INVITEONLYCHAN(user.get_nick_name(), channel_name));
-					return;
+			std::vector<std::string> channel_names;
+			std::vector<std::string> channel_keys;
+
+			std::string channels_str = args[0];
+			size_t pos = 0;
+			while ((pos = channels_str.find(',')) != std::string::npos) {
+				channel_names.push_back(channels_str.substr(0, pos));
+				channels_str.erase(0, pos + 1);
+			}
+			channel_names.push_back(channels_str);
+
+			if (args.size() > 1) {
+				std::string keys_str = args[1];
+				pos = 0;
+				while ((pos = keys_str.find(',')) != std::string::npos) {
+					channel_keys.push_back(keys_str.substr(0, pos));
+					keys_str.erase(0, pos + 1);
 				}
-				if (existing_channel.has_mode('k')) {
-					if (provided_key.empty() || provided_key != existing_channel.get_key()) {
-						user.send_reply(ERR_BADCHANNELKEY(user.get_nick_name(), channel_name));
-						return;
+				channel_keys.push_back(keys_str);
+			}
+
+			for (size_t i = 0; i < channel_names.size(); ++i) {
+				std::string channel_name = channel_names[i];
+				std::string provided_key = (i < channel_keys.size()) ? channel_keys[i] : "";
+
+				if (channel_name[0] != '#') {
+					user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+					continue;
+				}
+
+				std::map<std::string, Channel>::iterator it = channels.find(channel_name);
+				if (it != channels.end()) {
+					Channel &existing_channel = it->second;
+					if (existing_channel.get_channel_status() && !existing_channel.is_invited(&user)) {
+						user.send_reply(ERR_INVITEONLYCHAN(user.get_nick_name(), channel_name));
+						continue;
+					}
+					if (existing_channel.has_mode('k')) {
+						if (provided_key.empty() || provided_key != existing_channel.get_key()) {
+							user.send_reply(ERR_BADCHANNELKEY(user.get_nick_name(), channel_name));
+							continue;
+						}
+					}
+					if (existing_channel.has_mode('l') && 
+						existing_channel.get_users().size() >= existing_channel.get_user_limit()) {
+						user.send_reply(ERR_CHANNELISFULL(user.get_nick_name(), channel_name));
+						continue;
+					}
+					bool userAlreadyInChannel = false;
+					const std::vector<User *> &current_users = existing_channel.get_users();
+					for (size_t j = 0; j < current_users.size(); j++) {
+						if (current_users[j]->get_fd() == user.get_fd()) {
+							userAlreadyInChannel = true;
+							break;
+						}
+					}
+					if (!userAlreadyInChannel) {
+						existing_channel.add_user(&user);
 					}
 				}
-				if (existing_channel.has_mode('l') && 
-					existing_channel.get_users().size() >= existing_channel.get_user_limit()) {
-					user.send_reply(ERR_CHANNELISFULL(user.get_nick_name(), channel_name));
-					return;
+				else {
+					Channel new_channel;
+					channels[channel_name] = new_channel;
+					Channel &channel_ref = channels[channel_name];
+					channel_ref.add_user(&user);
+					channel_ref.set_operators_mode(1, &user);
 				}
-				bool userAlreadyInChannel = false;
-				const std::vector<User *> &current_users = existing_channel.get_users();
-				for (size_t i = 0; i < current_users.size(); i++) {
-					if (current_users[i]->get_fd() == user.get_fd()) {
-						userAlreadyInChannel = true;
-						break;
-					}
-				}
-				if (!userAlreadyInChannel) {
-					existing_channel.add_user(&user);
-				}
+				
+				user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
 			}
-			else
-			{
-				Channel new_channel;
-				channels[channel_name] = new_channel;
-				Channel &channel_ref = channels[channel_name];
-				channel_ref.add_user(&user);
-				channel_ref.set_operators_mode(1, &user);
-			}
-			
-			user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
 		}
 	}
-}
 	else if (cmd == "INVITE") {
 	if (args.size() < 2)
 		user.send_reply(ERR_NEEDMOREPARAMS(std::string("INVITE")));
