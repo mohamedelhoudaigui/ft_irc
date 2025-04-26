@@ -1,6 +1,7 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
+#include <poll.h>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -43,7 +44,7 @@ class Parser
             bool            isEnded(User & user);
             bool            check_auth(User & user);
 
-            void			process(struct epoll_event event);
+            void			process(struct pollfd event);
             void			set_epoll_fd(int _epoll_fd);
             void    		process_buffer(User & user, char* buffer);
 

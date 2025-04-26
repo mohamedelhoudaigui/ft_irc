@@ -8,20 +8,20 @@ Server::Server(int _port, std::string _password):
 port(_port),
 password(_password),
 parser(_password)
-{}
+{
+    memset(fds, 0, sizeof(fds));
+    nfds = 0;
+}
 
 const Server & Server::operator=(const Server & other)
 {
 	if (this != &other)
 	{
-		this->epoll_fd = other.epoll_fd;
 		this->server_fd = other.server_fd;
 		this->addr = other.addr;
-		this->event = other.event;
-		for (int i = 0; i < MAX_EVENTS; ++i)
-		{
-			this->events[i] = other.events[i];
-		}
+        this->nfds = other.nfds;
+		memcpy(this->fds, other.fds, sizeof(other.fds));
+
 		this->port = other.port;
 		this->password = other.password;
         this->parser = other.parser;
@@ -38,7 +38,10 @@ Server::Server(const Server & other)
 
 Server::~Server()
 {
-	close(epoll_fd);
+	for (int i = 0; i < nfds; ++i)
+    {
+        close(fds[i].fd);
+    }
 	close(server_fd);
 }
 
@@ -52,59 +55,84 @@ void	Server::set_nonblocking(int fd)
 
 void    Server::server_action()
 {
-    while (true)
+    struct sockaddr_in user_addr;
+    socklen_t user_len = sizeof(user_addr);
+    int user_fd = accept(server_fd, (struct sockaddr*)&user_addr, &user_len);
+    if (user_fd == -1)
     {
-        struct sockaddr_in user_addr;
-        socklen_t user_len = sizeof(user_addr);
-        int user_fd = accept(server_fd, (struct sockaddr*)&user_addr, &user_len);
-        if (user_fd == -1)
-        {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                // no more connections to accept
-                break;
-            }
-            else
-            {
-                perror("accept");
-                break;
-            }
-        }
+        perror("accept");
+        return ;
+    }
 
-        // make user socket non-blocking
-        set_nonblocking(user_fd);
+    set_nonblocking(user_fd);
 
-        // add user to epoll
-        event.events = EPOLLIN | EPOLLET;
-        event.data.fd = user_fd;
-        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, user_fd, &event) == -1) {
-            perror("epoll_ctl user");
-            close(user_fd);
-        }
+    if (nfds < MAX_EVENTS)
+    {
+        fds[nfds].fd = user_fd;
+        fds[nfds].events = POLLIN;
+        nfds++;
+    }
+    else
+    {
+        close(user_fd);
+        std::cerr << "Maximum connections reached" << std::endl;
     }
 }
 
-void    Server::user_action(struct epoll_event event)
+void    Server::user_action(struct pollfd event)
 {
     parser.process(event);
 }
 
-void    Server::epoll_loop() {
-
-    while (true)
+void Server::remove_client(int fd)
+{
+    for (int i = 0; i < nfds; ++i)
     {
-        int n = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
-        if (n == -1)
+        if (fds[i].fd == fd)
         {
-            perror("epoll_wait");
+            close(fd);
+            if (i != 0)
+            {
+                fds[i] = fds[nfds - 1];
+                fds[nfds - 1].fd = -1;
+                nfds--;
+            }
             break;
         }
+    }
+}
 
-        for (int i = 0; i < n; i++)
+void    Server::poll_loop()
+{
+    while (true)
+    {
+        int n_events = poll(fds, nfds, -1);
+        if (n_events == -1)
         {
-            if (events[i].data.fd == server_fd)
+            perror("poll");
+            break;
+        }
+        for (int i = 0; i < nfds; ++i)
+        {
+            if (fds[i].revents == 0)
+                continue;
+
+            if (fds[i].revents & (POLLERR | POLLHUP))
+            {
+                remove_client(fds[i].fd);
+                if (i == 0)
+                {
+                    std::cerr << "Server socket error." << std::endl;
+                    return;
+                }
+                i--;
+                continue;
+            }
+
+            if (fds[i].fd == server_fd)
                 server_action();
             else
-                user_action(events[i]);
+                user_action(fds[i]);
         }
     }
 }
@@ -141,24 +169,13 @@ void	Server::start() {
         exit(EXIT_FAILURE);
     }
 
-    // create epoll instance
-    epoll_fd = epoll_create1(0);
-    if (epoll_fd == -1) {
-        perror("epoll_create");
-        close(server_fd);
-        exit(EXIT_FAILURE);
-    }
-    parser.set_epoll_fd(epoll_fd);
+    // Initialize pollfd array
+    nfds = 1;
+    fds[0].fd = server_fd;
+    fds[0].events = POLLIN;
+    for (int i = 1; i < MAX_EVENTS; ++i)
+        fds[i].fd = -1;
 
-    // add server socker to epoll instance
-	event.events = EPOLLIN | EPOLLET;
-    event.data.fd = server_fd;
-    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_fd, &event) == -1) {
-        perror("epoll_ctl");
-        close(server_fd);
-        close(epoll_fd);
-        exit(EXIT_FAILURE);
-    }
-
-	std::cout << "server listening on port " << port << std::endl;
+    std::cout << "Server listening on port " << port << std::endl;
+    poll_loop();
 }

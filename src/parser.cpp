@@ -114,38 +114,44 @@ bool	Parser::check_auth(User & user)
 	return (true);
 }
 
-void	Parser::process(struct epoll_event event) {
+void	Parser::process(struct pollfd event) {
 
-	int user_fd = event.data.fd;
+	int user_fd = event.fd;
 
 	add_user(user_fd);
 	User & user = get_user(user_fd);
 
-	if (event.events == EPOLLIN)
-	{
-		char buffer[BUFFER_SIZE];
-		memset(buffer, 0, BUFFER_SIZE);
-	
-		ssize_t bytes_recv = recv(user_fd, buffer, BUFFER_SIZE, 0);
-	
-		switch (bytes_recv)
-		{
-			case -1:
-				if (errno == EAGAIN || errno == EWOULDBLOCK) { // no more data to read
-					break;
-				} else {
-					perror("recv");
-					remove_user(user_fd);
-					break;
-				}
+	char buffer[BUFFER_SIZE];
+	memset(buffer, 0, BUFFER_SIZE);
 
-			case 0:
+	ssize_t bytes_recv = recv(user_fd, buffer, BUFFER_SIZE, 0);
+
+	switch (bytes_recv)
+	{
+		case -1:
+		{
+			if (errno == EAGAIN || errno == EWOULDBLOCK)
+			{ // no more data to read
+				break;
+			}
+			else
+			{
+				perror("recv");
 				remove_user(user_fd);
 				break;
-	
-			default:
-				process_buffer(user, buffer);
-				break ;
+			}
+		}
+
+		case 0:
+		{
+			remove_user(user_fd);
+			break;
+		}
+
+		default:
+		{
+			process_buffer(user, buffer);
+			break ;
 		}
 	}
 }

@@ -11,7 +11,7 @@ int main (int ac, char **av)
 
 	Server a(parse_port(av[1]), av[2]);
 	a.start();
-	a.epoll_loop();
+	a.poll_loop();
 
 	return (0);
 }

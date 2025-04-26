@@ -2,7 +2,7 @@
 #define SERVER_HPP
 
 #include <sys/socket.h>
-#include <sys/epoll.h>
+#include <poll.h>
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -17,7 +17,7 @@
 
 #include "parser.hpp"
 
-#define MAX_EVENTS 10
+#define MAX_EVENTS 500
 
 
 class Server
@@ -33,19 +33,19 @@ class Server
 
 		// server methods:
 		void	set_nonblocking(int fd);
-		void	epoll_loop();
+		void	poll_loop();
 		void	server_action();
-		void	user_action(struct epoll_event event);
+		void    user_action(struct pollfd event);
+		void	remove_client(int fd);
 		void	start();
 
 	private:
 
 		// epoll data:
-		int 				epoll_fd;
 		int					server_fd;
 		struct sockaddr_in	addr;
-		struct epoll_event	event;
-		struct epoll_event	events[MAX_EVENTS];
+		struct pollfd		fds[MAX_EVENTS];
+		int					nfds;
 
 		// irc server data:
 		int 				port;
