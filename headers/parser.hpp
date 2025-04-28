@@ -19,6 +19,8 @@
 #include "replys.hpp"
 #include "utils.hpp"
 
+class Server;
+
 #define BUFFER_SIZE 512
 
 class   cmd_line
@@ -34,7 +36,7 @@ class Parser
 {
     public:
             Parser();
-            Parser(std::string password);
+            Parser(std::string password, Server* server);
             Parser(const Parser & other);
             const Parser & operator=(const Parser & other);
             ~Parser();
@@ -60,6 +62,7 @@ class Parser
         std::string         server_password;
         std::vector<User>	users;
 		int					epoll_fd;
+        Server*             server;
 
 };
 

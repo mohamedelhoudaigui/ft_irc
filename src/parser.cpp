@@ -1,10 +1,11 @@
 #include "../headers/parser.hpp"
+#include "../headers/server.hpp"
 
 // canonical form :
 
-Parser::Parser(): server_password("") {}
+Parser::Parser(): server_password(""), server(NULL) {}
 
-Parser::Parser(std::string password): server_password(password) {}
+Parser::Parser(std::string password, Server* server): server_password(password), server(server) {}
 
 const Parser & Parser::operator=(const Parser & other) {
    if (this != &other)
@@ -65,8 +66,6 @@ void    Parser::add_user(int fd) {
 
 void    Parser::remove_user(int fd)
 {
-	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
-	close(fd);
 	const User & user = get_user(fd);
 	users.erase(find(users.begin(), users.end(), user));
 }
@@ -125,35 +124,20 @@ void	Parser::process(struct pollfd event) {
 	memset(buffer, 0, BUFFER_SIZE);
 
 	ssize_t bytes_recv = recv(user_fd, buffer, BUFFER_SIZE, 0);
-
-	switch (bytes_recv)
+	
+	if (bytes_recv <= 0)
 	{
-		case -1:
-		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-			{ // no more data to read
-				break;
-			}
-			else
-			{
-				perror("recv");
-				remove_user(user_fd);
-				break;
-			}
-		}
-
-		case 0:
-		{
-			remove_user(user_fd);
-			break;
-		}
-
-		default:
-		{
-			process_buffer(user, buffer);
-			break ;
-		}
+		if (bytes_recv < 0)
+			perror("recv");
+		remove_user(user_fd);
+		server->remove_client(user_fd);
+		return ;
 	}
+	else
+	{
+		process_buffer(user, buffer);
+	}
+	
 }
 
 void Parser::process_buffer(User &user, char* buffer)

@@ -1,4 +1,5 @@
 #include "../headers/server.hpp"
+#include "../headers/parser.hpp"
 
 // canonical form :
 
@@ -7,7 +8,7 @@ Server::Server() {}
 Server::Server(int _port, std::string _password):
 port(_port),
 password(_password),
-parser(_password)
+parser(_password, this)
 {
     memset(fds, 0, sizeof(fds));
     nfds = 0;
@@ -97,6 +98,7 @@ void Server::remove_client(int fd)
                 fds[nfds - 1].fd = -1;
                 nfds--;
             }
+            std::cout << "client removed" << std::endl;
             break;
         }
     }
@@ -130,9 +132,13 @@ void    Server::poll_loop()
             }
 
             if (fds[i].fd == server_fd)
+            {
                 server_action();
+            }
             else
-                user_action(fds[i]);
+            {
+                user_action(fds[i]); 
+            }
         }
     }
 }
