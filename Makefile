@@ -20,7 +20,7 @@ CC = c++
 
 RM = rm -f
 
-CFLAGS = -std=c++98 -Wall -Wextra -Werror -O3 -g
+CFLAGS = -std=c++98 -Wall -Wextra -Werror -O3 -fsanitize=address -g3
 
 NAME = ircserv
 

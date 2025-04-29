@@ -14,7 +14,6 @@ const Parser & Parser::operator=(const Parser & other) {
    {
 		this->server_password = other.server_password;
 		this->users = other.users;
-		this->epoll_fd = other.epoll_fd;
    }
    return (*this); 
 }
@@ -26,7 +25,6 @@ Parser::Parser(const Parser & other)
 
 Parser::~Parser()
 {
-	close(epoll_fd);
 	for (size_t i = 0 ; i < this->users.size(); ++i)
 	{
 		close(users[i].get_fd());
@@ -34,11 +32,6 @@ Parser::~Parser()
 }
 
 // ---------------------------
-
-void    Parser::set_epoll_fd(int _epoll_fd)
-{
-	epoll_fd = _epoll_fd;
-}
 
 bool    Parser::check_user(int fd) {
 	for (size_t i = 0; i < users.size(); ++i)
@@ -137,17 +130,17 @@ void	Parser::process(struct pollfd event) {
 	}
 	else
 	{
-		process_buffer(user, buffer);
+		process_buffer(user, buffer, bytes_recv);
 	}
 	
 }
 
-void Parser::process_buffer(User &user, char* buffer)
+void Parser::process_buffer(User &user, char* buffer, ssize_t bytes_recv)
 {
-	std::string new_data(buffer);
+	std::string new_data(buffer, bytes_recv);
 
-	if (new_data.size() > BUFFER_SIZE)
-		new_data = new_data.substr(new_data.size() - BUFFER_SIZE);
+	if (bytes_recv > BUFFER_SIZE)
+		new_data = new_data.substr(0, new_data.size() - BUFFER_SIZE);
 
 	if (user.get_buffer().size() + new_data.size() > BUFFER_SIZE)
 	{
@@ -158,7 +151,7 @@ void Parser::process_buffer(User &user, char* buffer)
 			user.set_buffer(user.get_buffer().substr(excess));
 	}
 
-	user.add_to_buffer(buffer);
+	user.add_to_buffer(buffer, bytes_recv);
 	parse(user);
 }
 
@@ -226,10 +219,10 @@ void Parser::parse(User &user) {
 	if (pos > 0)
 		user.set_buffer(buffer.erase(0, pos));
 
-	for (std::vector<cmd_line>::iterator it = cmds.begin(); it != cmds.end(); ++it)
+	for (size_t i = 0; i < cmds.size() ; ++i)
 	{
-		redirect_cmd(user, *it);
-		std::cout << *it << std::endl;
+		redirect_cmd(user, cmds[i]);
+		std::cout << cmds[i] << std::endl;
 	}
 }
 
@@ -309,13 +302,11 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			else
 			{
 				user.send_reply(ERR_NEEDMOREPARAMS(std::string("USER")));
-				std::cerr  << "here1" << std::endl;
 			}
 		}
 		else
 		{
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("USER")));
-			std::cerr  << "here2" << std::endl;
 		}
 	}
 
@@ -329,14 +320,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			user.send_reply(RPL_WELCOME(user.get_nick_name(), std::string("Welcome to the irc server !")));
 	}
 
-	else if (cmd == "QUIT")
-	{
-		std::string reason = args.empty() ? "Client quit" : args[0];
-		user.send_reply("ERROR :Closing link: " + reason);
-		remove_user(user.get_fd());
-	}
-
-	else if (cmd == "PING")
+	else if (cmd == "PING" || cmd == "PONG")
 	{
 		if (args.size() != 1)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("PING")));

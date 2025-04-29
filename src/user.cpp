@@ -83,9 +83,9 @@ int	User::get_fd()
     return (fd);
 }
 
-void		User::add_to_buffer(char* buffer)
+void		User::add_to_buffer(char* buffer, ssize_t bytes_recv)
 {
-    user_buffer.append(buffer);
+    user_buffer.append(buffer, bytes_recv);
 }
 
 void			User::set_buffer(std::string buffer)

@@ -9,10 +9,7 @@ Server::Server(int _port, std::string _password):
 port(_port),
 password(_password),
 parser(_password, this)
-{
-    memset(fds, 0, sizeof(fds));
-    nfds = 0;
-}
+{}
 
 const Server & Server::operator=(const Server & other)
 {
@@ -20,8 +17,7 @@ const Server & Server::operator=(const Server & other)
 	{
 		this->server_fd = other.server_fd;
 		this->addr = other.addr;
-        this->nfds = other.nfds;
-		memcpy(this->fds, other.fds, sizeof(other.fds));
+		this->fds = other.fds;
 
 		this->port = other.port;
 		this->password = other.password;
@@ -39,7 +35,7 @@ Server::Server(const Server & other)
 
 Server::~Server()
 {
-	for (int i = 0; i < nfds; ++i)
+	for (size_t i = 0; i < fds.size(); ++i)
     {
         close(fds[i].fd);
     }
@@ -50,8 +46,7 @@ Server::~Server()
 
 void	Server::set_nonblocking(int fd)
 {
-	int flags = fcntl(fd, F_GETFL, 0);
-    fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+    fcntl(fd, F_SETFL, O_NONBLOCK);
 }
 
 void    Server::server_action()
@@ -67,11 +62,13 @@ void    Server::server_action()
 
     set_nonblocking(user_fd);
 
-    if (nfds < MAX_EVENTS)
+    if (fds.size() < MAX_EVENTS)
     {
-        fds[nfds].fd = user_fd;
-        fds[nfds].events = POLLIN;
-        nfds++;
+        struct pollfd temp;
+
+        temp.fd = user_fd;
+        temp.events = POLLIN;
+        fds.push_back(temp);
     }
     else
     {
@@ -87,18 +84,14 @@ void    Server::user_action(struct pollfd event)
 
 void Server::remove_client(int fd)
 {
-    for (int i = 0; i < nfds; ++i)
+    std::cerr << fds.size() << std::endl;
+
+    for (size_t i = 1; i < fds.size(); ++i)
     {
         if (fds[i].fd == fd)
         {
             close(fd);
-            if (i != 0)
-            {
-                fds[i] = fds[nfds - 1];
-                fds[nfds - 1].fd = -1;
-                nfds--;
-            }
-            std::cout << "client removed" << std::endl;
+            fds.erase(fds.begin() + i);
             break;
         }
     }
@@ -108,13 +101,13 @@ void    Server::poll_loop()
 {
     while (true)
     {
-        int n_events = poll(fds, nfds, -1);
+        int n_events = poll(&fds[0], fds.size(), -1); 
         if (n_events == -1)
         {
             perror("poll");
             break;
         }
-        for (int i = 0; i < nfds; ++i)
+        for (size_t i = 0; i < fds.size(); ++i)
         {
             if (fds[i].revents == 0)
                 continue;
@@ -176,11 +169,12 @@ void	Server::start() {
     }
 
     // Initialize pollfd array
-    nfds = 1;
-    fds[0].fd = server_fd;
-    fds[0].events = POLLIN;
-    for (int i = 1; i < MAX_EVENTS; ++i)
-        fds[i].fd = -1;
+
+    struct pollfd temp;
+
+    temp.fd = server_fd;
+    temp.events = POLLIN;
+    fds.push_back(temp);
 
     std::cout << "Server listening on port " << port << std::endl;
     poll_loop();

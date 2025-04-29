@@ -14,11 +14,11 @@
 #include <cstdlib>
 #include <iostream>
 #include <errno.h>
+#include <vector>
 
 #include "parser.hpp"
 
 #define MAX_EVENTS 500
-
 
 class Server
 {
@@ -42,10 +42,9 @@ class Server
 	private:
 
 		// epoll data:
-		int					server_fd;
-		struct sockaddr_in	addr;
-		struct pollfd		fds[MAX_EVENTS];
-		int					nfds;
+		int							server_fd;
+		struct sockaddr_in			addr;
+		std::vector<struct pollfd>	fds;
 
 		// irc server data:
 		int 				port;

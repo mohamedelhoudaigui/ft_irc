@@ -50,7 +50,7 @@ class Parser
 
             void			process(struct pollfd event);
             void			set_epoll_fd(int _epoll_fd);
-            void    		process_buffer(User & user, char* buffer);
+            void    		process_buffer(User & user, char* buffer, ssize_t bytes_recv);
 
             void			add_user(int fd);
             void			remove_user(int fd);
@@ -70,10 +70,10 @@ class Parser
             User*           find_invited_user(const std::string nickname);
 
     private:
-        std::string         server_password;
-        std::vector<User>	users;
-        std::map<std::string, Channel> channels;
-        Server*             server;
+        std::string                     server_password;
+        std::vector<User>               users;
+        std::map<std::string, Channel>  channels;
+        Server*                         server;
 
 };
 

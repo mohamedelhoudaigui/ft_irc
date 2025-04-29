@@ -26,7 +26,7 @@ class User
 		std::string		get_socket_address();
 		int				get_fd();
 
-		void			add_to_buffer(char* buffer);
+		void			add_to_buffer(char* buffer, ssize_t bytes_recv);
 		void			clear_buffer();
 		std::string 	get_buffer();
 		void			set_buffer(std::string buffer);
