@@ -84,8 +84,6 @@ void    Server::user_action(struct pollfd event)
 
 void Server::remove_client(int fd)
 {
-    std::cerr << fds.size() << std::endl;
-
     for (size_t i = 1; i < fds.size(); ++i)
     {
         if (fds[i].fd == fd)
@@ -96,6 +94,8 @@ void Server::remove_client(int fd)
         }
     }
 }
+
+
 
 void    Server::poll_loop()
 {

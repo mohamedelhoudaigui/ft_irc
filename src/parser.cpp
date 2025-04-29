@@ -321,13 +321,18 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 	}
 	else if (cmd == "PRIVMSG")
 	{
+		if (!check_auth(user))
+			return ;
 		if (args.size() < 1 || trailing.empty())
 			user.send_reply(ERR_NOTEXTTOSEND());
 		else
 			privmsg(user.get_fd(), args[0], trailing, user);
 		
 	}
-	else if (cmd == "JOIN") {
+	else if (cmd == "JOIN")
+	{
+		if (!check_auth(user))
+			return ;
 		if (args.empty())
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("JOIN")));
 		else
@@ -404,47 +409,53 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			}
 		}
 	}
-	else if (cmd == "INVITE") {
-	if (args.size() < 2)
-		user.send_reply(ERR_NEEDMOREPARAMS(std::string("INVITE")));
-	else
+	else if (cmd == "INVITE")
 	{
-		std::string invited = args[0];
-		std::string channel_name = args[1];
-
-		if (channel_name[0] != '#') {
-			user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
-		}
+		if (!check_auth(user))
+			return ;
+		if (args.size() < 2)
+			user.send_reply(ERR_NEEDMOREPARAMS(std::string("INVITE")));
 		else
 		{
-			std::map<std::string, Channel>::iterator it = channels.find(channel_name);
-			if (it != channels.end())
+			std::string invited = args[0];
+			std::string channel_name = args[1];
+
+			if (channel_name[0] != '#') {
+				user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+			}
+			else
 			{
-				Channel &channel = it->second;
-				if (!channel.is_operator(&user)) {
-					user.send_reply(ERR_CHANOPRIVSNEEDED(channel_name));
-					return;
-				}
-				
-				User *selected_user = find_invited_user(invited);
-				
-				if (selected_user)
+				std::map<std::string, Channel>::iterator it = channels.find(channel_name);
+				if (it != channels.end())
 				{
-					channel.add_invited(selected_user);
-					selected_user->send_reply(RPL_INVITE(user.get_nick_name(), invited, channel_name));
-					user.send_reply(RPL_INVITING(user.get_nick_name(), invited, channel_name));
+					Channel &channel = it->second;
+					if (!channel.is_operator(&user)) {
+						user.send_reply(ERR_CHANOPRIVSNEEDED(channel_name));
+						return;
+					}
+					
+					User *selected_user = find_invited_user(invited);
+					
+					if (selected_user)
+					{
+						channel.add_invited(selected_user);
+						selected_user->send_reply(RPL_INVITE(user.get_nick_name(), invited, channel_name));
+						user.send_reply(RPL_INVITING(user.get_nick_name(), invited, channel_name));
+					}
+					else {
+						user.send_reply(ERR_NOSUCHNICK(invited));
+					}
 				}
 				else {
-					user.send_reply(ERR_NOSUCHNICK(invited));
+					user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
 				}
-			}
-			else {
-				user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
 			}
 		}
 	}
-}
-	else if (cmd == "KICK") {
+	else if (cmd == "KICK")
+	{
+		if (!check_auth(user))
+			return ;
 		if (args.size() < 2)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("KICK")));
 		else {
@@ -487,6 +498,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 	}
 	else if (cmd == "TOPIC")
 	{
+		if (!check_auth(user))
+			return ;
 		if (args.size() < 1)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("TOPIC")));
 		else
@@ -495,6 +508,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 	}
 	else if (cmd == "MODE")
 	{
+		if (!check_auth(user))
+			return ;
 		handleModeCommand(&user, args);
 	}
 	else
