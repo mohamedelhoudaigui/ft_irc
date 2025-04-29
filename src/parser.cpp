@@ -287,13 +287,12 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 
 	else if (cmd == "USER")
 	{
-		if (args.size() == 3 && !trailing.empty())
+		if ((args.size() == 3 && !trailing.empty()) || (args.size() == 4 && trailing.empty()))
 		{
 			std::string	user_name = args[0];
 			std::string	cmp_arg1 = args[1];
 			std::string	cmp_arg2 = args[2];
-			std::string real_name = trailing;
-
+			std::string real_name = trailing.empty() ? args[3] : trailing;
 
 			if (!cmp_arg1.empty() &&
 				!cmp_arg2.empty() &&
@@ -306,10 +305,16 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 				process_auth(user);
 			}
 			else
+			{
 				user.send_reply(ERR_NEEDMOREPARAMS(std::string("USER")));
+				std::cerr  << "here1" << std::endl;
+			}
 		}
 		else
+		{
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("USER")));
+			std::cerr  << "here2" << std::endl;
+		}
 	}
 
 	else if (cmd == "CAP")

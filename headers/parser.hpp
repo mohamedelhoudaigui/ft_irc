@@ -5,7 +5,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <sys/epoll.h>
 #include <stdexcept>
 #include <algorithm>
 #include <cstring>
