@@ -2,13 +2,15 @@ SRCS = ./src/server.cpp \
 		./src/parser.cpp \
 		./src/user.cpp \
 		./src/utils.cpp \
-		./src/main.cpp
+		./src/main.cpp \
+		./src/channels.cpp
 
 HEADERS = ./headers/server.hpp \
 			./headers/utils.hpp \
 			./headers/parser.hpp \
 			./headers/replys.hpp \
-			./headers/user.hpp
+			./headers/user.hpp \
+			./headers/channels.hpp
 
 OBJ_DIR = objects
 

@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <cerrno>
 #include <cstring>
+#include <map>
 
 #include "user.hpp"
 #include "replys.hpp"
@@ -21,6 +22,8 @@
 class Server;
 
 #define BUFFER_SIZE 512
+
+class Channel;
 
 class   cmd_line
 {
@@ -56,11 +59,20 @@ class Parser
             bool			check_nick_name(std::string nick);
 
             void	        process_auth(User & user);
+            //ADDED BY CAZIANE
+            void            privmsg(int fd, std::string receiver, std::string msg, User &user);
+            void            topic(User &user, std::string channel_name, std::string new_topic, Channel &channel);
+            void            handleModeCommand(User* user, std::vector<std::string>& args);
+            void	        topic_command(std::string channel_name, std::string new_topic, User& user);
+
+
+            User*           find_user_by_nickname(Channel &channel,const std::string nickname);
+            User*           find_invited_user(const std::string nickname);
 
     private:
         std::string         server_password;
         std::vector<User>	users;
-		int					epoll_fd;
+        std::map<std::string, Channel> channels;
         Server*             server;
 
 };
