@@ -229,15 +229,16 @@ void Parser::parse(User &user) {
 void	Parser::process_auth(User & user)
 {
 	if (!user.get_auth())
+	{
 		user.add_auth_step();
+		if (user.get_auth_steps() == 3)
+		{
+			user.send_reply(RPL_WELCOME(user.get_nick_name(), std::string("welcome to irc server !")));
+			user.set_auth(true);
+		}
+	}
 	else
 		return ;
-
-	if (user.get_auth_steps() == 3)
-	{
-		user.send_reply(RPL_WELCOME(user.get_nick_name(), std::string("welcome to irc server !")));
-		user.set_auth(true);
-	}
 }
 
 void	Parser::redirect_cmd(User & user, cmd_line & c)
@@ -262,8 +263,6 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 
 	else if (cmd == "NICK")
 	{
-		// if (args.size() > 1)
-		// 	user.send_reply(ERR_NEEDMOREPARAMS(std::string("NICK")));
 		if (args.size() < 1)
 			user.send_reply(ERR_NONICKNAMEGIVEN(user.get_nick_name()));
 		else if (check_nick_name(args[0]) == false)
@@ -309,17 +308,6 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("USER")));
 		}
 	}
-
-	else if (cmd == "CAP")
-	{
-		if (args.size() != 1)
-			user.send_reply(ERR_NEEDMOREPARAMS(std::string("CAP")));
-		else if (args[0] == "LS")
-			user.send_reply(":localhost CAP * ACK :\r\n");
-		else if (args[0] == "END" && user.get_auth())
-			user.send_reply(RPL_WELCOME(user.get_nick_name(), std::string("Welcome to the irc server !")));
-	}
-
 	else if (cmd == "PING" || cmd == "PONG")
 	{
 		if (args.size() != 1)

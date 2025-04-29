@@ -35,6 +35,7 @@ const User & User::operator=(const User & other)
 	if (this != &other) {
 		this->fd = other.fd;
 		this->ip_address = other.ip_address;
+        this->steps = other.steps;
         this->auth = other.auth;
         this->user_name = other.user_name;
         this->real_name = other.real_name;
