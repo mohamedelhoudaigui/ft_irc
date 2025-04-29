@@ -1,11 +1,13 @@
 #include "../headers/parser.hpp"
 #include "../headers/replys.hpp"
 #include "../headers/channels.hpp"
+#include "../headers/server.hpp"
+
 // canonical form :
 
-Parser::Parser(): server_password("") {}
+Parser::Parser(): server_password(""), server(NULL) {}
 
-Parser::Parser(std::string password): server_password(password) {}
+Parser::Parser(std::string password, Server* server): server_password(password), server(server) {}
 
 const Parser & Parser::operator=(const Parser & other) {
    if (this != &other)
@@ -66,8 +68,6 @@ void    Parser::add_user(int fd) {
 
 void    Parser::remove_user(int fd)
 {
-	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
-	close(fd);
 	const User & user = get_user(fd);
 	users.erase(find(users.begin(), users.end(), user));
 }
@@ -126,35 +126,20 @@ void	Parser::process(struct pollfd event) {
 	memset(buffer, 0, BUFFER_SIZE);
 
 	ssize_t bytes_recv = recv(user_fd, buffer, BUFFER_SIZE, 0);
-
-	switch (bytes_recv)
+	
+	if (bytes_recv <= 0)
 	{
-		case -1:
-		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-			{ // no more data to read
-				break;
-			}
-			else
-			{
-				perror("recv");
-				remove_user(user_fd);
-				break;
-			}
-		}
-
-		case 0:
-		{
-			remove_user(user_fd);
-			break;
-		}
-
-		default:
-		{
-			process_buffer(user, buffer);
-			break ;
-		}
+		if (bytes_recv < 0)
+			perror("recv");
+		remove_user(user_fd);
+		server->remove_client(user_fd);
+		return ;
 	}
+	else
+	{
+		process_buffer(user, buffer);
+	}
+	
 }
 
 void Parser::process_buffer(User &user, char* buffer)
@@ -304,13 +289,12 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 
 	else if (cmd == "USER")
 	{
-		if (args.size() == 3 && !trailing.empty())
+		if ((args.size() == 3 && !trailing.empty()) || (args.size() == 4 && trailing.empty()))
 		{
 			std::string	user_name = args[0];
 			std::string	cmp_arg1 = args[1];
 			std::string	cmp_arg2 = args[2];
-			std::string real_name = trailing;
-
+			std::string real_name = trailing.empty() ? args[3] : trailing;
 
 			if (!cmp_arg1.empty() &&
 				!cmp_arg2.empty() &&
@@ -323,10 +307,16 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 				process_auth(user);
 			}
 			else
+			{
 				user.send_reply(ERR_NEEDMOREPARAMS(std::string("USER")));
+				std::cerr  << "here1" << std::endl;
+			}
 		}
 		else
+		{
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("USER")));
+			std::cerr  << "here2" << std::endl;
+		}
 	}
 
 	else if (cmd == "CAP")
@@ -753,14 +743,14 @@ std::ostream& operator<<(std::ostream& os, const cmd_line& c)
 	
 	if (!c.args.empty())
 	{
-		os << "Arguments:";
-		for (size_t i = 0; i < c.args.size(); ++i)
-			os << " " << c.args[i];
-		os << std::endl;
-	}
-	
-	if (!c.trailing.empty())
-		os << "Trailing: " << c.trailing << std::endl;
+        os << "Arguments:";
+        for (size_t i = 0; i < c.args.size(); ++i)
+            os << " " << c.args[i];
+        os << std::endl;
+    }
+    
+    if (!c.trailing.empty())
+        os << "Trailing: " << c.trailing << std::endl;
 
-	return os;
+    return os;
 }
