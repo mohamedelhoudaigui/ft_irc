@@ -46,7 +46,6 @@ class Server
 		struct sockaddr_in			addr;
 		std::vector<struct pollfd>	fds;
 
-		// irc server data:
 		int 				port;
 		std::string 		password;
 		Parser				parser;

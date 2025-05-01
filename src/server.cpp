@@ -18,7 +18,6 @@ const Server & Server::operator=(const Server & other)
 		this->server_fd = other.server_fd;
 		this->addr = other.addr;
 		this->fds = other.fds;
-
 		this->port = other.port;
 		this->password = other.password;
         this->parser = other.parser;
@@ -93,9 +92,8 @@ void Server::remove_client(int fd)
             break;
         }
     }
+    parser.remove_user(fd);
 }
-
-
 
 void    Server::poll_loop()
 {

@@ -61,8 +61,12 @@ void    Parser::add_user(int fd) {
 
 void    Parser::remove_user(int fd)
 {
-	const User & user = get_user(fd);
-	users.erase(find(users.begin(), users.end(), user));
+	try {
+		const User & user = get_user(fd);
+		users.erase(find(users.begin(), users.end(), user));
+	}
+	catch (...) // ignore no user is found exception
+	{}
 }
 
 bool    Parser::check_nick_name(std::string nick)
