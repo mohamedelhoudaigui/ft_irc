@@ -694,32 +694,35 @@ void Parser::handleModeCommand(User* user, std::vector<std::string>& args)
 	}
 	const std::string& target = args[0];
 	
-	if (target[0] != '#') {
+	if (target.empty() || target[0] != '#') {
 		user->send_reply(ERR_NOSUCHCHANNEL(target));
 		return;
 	}
 
-	std::string channel_name = args[0];
-	std::string mode_string = args[1];
-	std::vector<std::string> mode_args;
-
-	for (size_t i = 2; i < args.size(); ++i){
-		mode_args.push_back(args[i]);
-	}
-
-
+	std::string channel_name = target;
 	std::map<std::string, Channel>::iterator it = channels.find(target);
-	if (it == channels.end())
+	if (it == channels.end()){
 		user->send_reply(ERR_NOSUCHCHANNEL(target));
-	else{
+		return ;
+	}
 	Channel &channel = it->second;
 
+	if (args.size() == 1) {
+        user->send_reply(RPL_CHANNELMODEIS(channel_name, channel_name, channel.get_modes()));
+        return;
+    }
+
+	std::string mode_string = args[1];
 	if (!channel.is_operator(user)){
 		user->send_reply(ERR_CHANOPRIVSNEEDED(target));
 		return;
 	}
-	channel.apply_modes(mode_string, mode_args, *this);
+	std::vector<std::string> mode_args;
+	for (size_t i = 2; i < args.size(); ++i){
+		mode_args.push_back(args[i]);
 	}
+
+	channel.apply_modes(mode_string, mode_args, *this);
 }
 
 // -------------------------------
