@@ -71,7 +71,7 @@ class Parser
 
     private:
         std::string                     server_password;
-        std::vector<User>               users;
+        std::vector<User*>              users;
         std::map<std::string, Channel>  channels;
         Server*                         server;
 

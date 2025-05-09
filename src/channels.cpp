@@ -2,7 +2,10 @@
 #include "../headers/parser.hpp"
 
 Channel::Channel(){
-
+    is_invite_only = false;
+    user_limits = 0;
+    modes = "";
+    key = "";
 }
 
 Channel::~Channel(){
@@ -10,7 +13,17 @@ Channel::~Channel(){
 }
 
 Channel::Channel(const Channel &c){
-    this->name = c.name; 
+    this->name = c.name;
+    this->users = c.users;
+    this->operators = c.operators;
+    this->invited = c.invited;
+    this->modes = c.modes;
+    this->key = c.key;
+    this->user_limits = c.user_limits;
+    this->is_invite_only = c.is_invite_only;
+    this->topic = c.topic;
+    this->topic_author = c.topic_author;
+    this->topic_time_change = c.topic_time_change;
 }
 
 Channel Channel::operator=(const Channel &c){
@@ -18,6 +31,15 @@ Channel Channel::operator=(const Channel &c){
     {
         this->name = c.name;
         this->users = c.users;
+        this->operators = c.operators;
+        this->invited = c.invited;
+        this->modes = c.modes;
+        this->key = c.key;
+        this->user_limits = c.user_limits;
+        this->is_invite_only = c.is_invite_only;
+        this->topic = c.topic;
+        this->topic_author = c.topic_author;
+        this->topic_time_change = c.topic_time_change;
     }
     return *this;
 }
@@ -37,7 +59,7 @@ void    Channel::set_topic(const std::string &name, const std::string &author){
 }
 
 std::string Channel::get_topic() const{
-    return this->name;
+    return this->topic;
 }
 
 void Channel::add_user(User* user) {

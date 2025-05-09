@@ -29,6 +29,12 @@ int	parse_port(std::string port)
 	exit(1);
 }
 
+std::string int_to_string(int n) {
+	std::stringstream ss;
+	ss << n;
+	return ss.str();
+}
+
 std::string	convert_to_lower(std::string s)
 {
 	for (size_t i = 0; i <s.size(); ++i)

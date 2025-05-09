@@ -2,6 +2,7 @@
 #include "../headers/replys.hpp"
 #include "../headers/channels.hpp"
 #include "../headers/server.hpp"
+#include <string>
 
 // canonical form :
 
@@ -13,7 +14,16 @@ const Parser & Parser::operator=(const Parser & other) {
    if (this != &other)
    {
 		this->server_password = other.server_password;
-		this->users = other.users;
+		// Clear existing users
+		for (size_t i = 0; i < this->users.size(); ++i) {
+			delete this->users[i];
+		}
+		this->users.clear();
+		// Copy users
+		for (size_t i = 0; i < other.users.size(); ++i) {
+			User* new_user = new User(*other.users[i]);
+			this->users.push_back(new_user);
+		}
    }
    return (*this); 
 }
@@ -27,7 +37,8 @@ Parser::~Parser()
 {
 	for (size_t i = 0 ; i < this->users.size(); ++i)
 	{
-		close(users[i].get_fd());
+		close(users[i]->get_fd());
+		delete users[i];
 	}
 }
 
@@ -36,7 +47,7 @@ Parser::~Parser()
 bool    Parser::check_user(int fd) {
 	for (size_t i = 0; i < users.size(); ++i)
 	{
-		if (users[i].get_fd() == fd)
+		if (users[i]->get_fd() == fd)
 			return (true);
 	}
 	return (false);
@@ -45,16 +56,16 @@ bool    Parser::check_user(int fd) {
 User &    Parser::get_user(int fd) { // use check user before calling this !!
 	for (size_t i = 0; i < users.size(); ++i)
 	{
-		if (users[i].get_fd() == fd)
-			return (users[i]);
+		if (users[i]->get_fd() == fd)
+			return (*users[i]);
 	}
 	throw std::runtime_error("user not found");
 }
 
 void    Parser::add_user(int fd) {
 	if (!check_user(fd)) {
-		User new_user(fd);
-		new_user.get_socket_address();
+		User* new_user = new User(fd);
+		new_user->get_socket_address();
 		users.push_back(new_user);
 	}
 }
@@ -62,8 +73,17 @@ void    Parser::add_user(int fd) {
 void    Parser::remove_user(int fd)
 {
 	try {
-		const User & user = get_user(fd);
-		users.erase(find(users.begin(), users.end(), user));
+		User* user = NULL;
+		for (size_t i = 0; i < users.size(); ++i) {
+			if (users[i]->get_fd() == fd) {
+				user = users[i];
+				users.erase(users.begin() + i);
+				break;
+			}
+		}
+		if (user) {
+			delete user;
+		}
 	}
 	catch (...) // ignore no user is found exception
 	{}
@@ -73,7 +93,7 @@ bool    Parser::check_nick_name(std::string nick)
 {
 	for (size_t i = 0; i < users.size(); ++i)
 	{
-		if (users[i].get_nick_name() == nick)
+		if (users[i]->get_nick_name() == nick)
 			return (false);
 	}
 	return (true);
@@ -374,7 +394,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 				std::map<std::string, Channel>::iterator it = channels.find(channel_name);
 				if (it != channels.end()) {
 					Channel &existing_channel = it->second;
-					if (existing_channel.get_channel_status() && !existing_channel.is_invited(&user)) {
+					if (existing_channel.has_mode('i') && !existing_channel.is_invited(&user)) {
 						user.send_reply(ERR_INVITEONLYCHAN(user.get_nick_name(), channel_name));
 						continue;
 					}
@@ -406,7 +426,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 					channels[channel_name] = new_channel;
 					Channel &channel_ref = channels[channel_name];
 					channel_ref.add_user(&user);
-					channel_ref.set_operators_mode(1, &user);
+					channel_ref.set_operators_mode(true, &user);
 				}
 				
 				user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
@@ -516,6 +536,57 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			return ;
 		handleModeCommand(&user, args);
 	}
+	else if (cmd == "ROLL")
+	{
+		if (!check_auth(user))
+			return;
+		
+		int die1 = (rand() % 6) + 1;
+		int die2 = (rand() % 6) + 1;
+		
+		if (args.size() > 0) {
+			std::string channel_name = args[0];
+			std::map<std::string, Channel>::iterator it = channels.find(channel_name);
+			if (it != channels.end()) {
+				Channel &channel = it->second;
+				const std::vector<User *> &channel_users = channel.get_users();
+				std::string roll_message = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@localhost PRIVMSG " + channel_name + " :rolled a " + int_to_string(die1) + " and a " + int_to_string(die2) + "\r\n";
+				for (size_t i = 0; i < channel_users.size(); ++i) {
+					send(channel_users[i]->get_fd(), roll_message.c_str(), roll_message.size(), 0);
+				}
+			} else {
+				user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+			}
+		} else {
+			std::string roll_message = "Rolled a " + int_to_string(die1) + " and a " + int_to_string(die2) + "\r\n";
+			send(user.get_fd(), roll_message.c_str(), roll_message.size(), 0);
+		}
+	}
+	else if (cmd == "FLIP")
+	{
+		if (!check_auth(user))
+			return;
+		
+		std::string result = (rand() % 2) ? "HEADS" : "TAILS";
+		
+		if (args.size() > 0) {
+			std::string channel_name = args[0];
+			std::map<std::string, Channel>::iterator it = channels.find(channel_name);
+			if (it != channels.end()) {
+				Channel &channel = it->second;
+				const std::vector<User *> &channel_users = channel.get_users();
+				std::string flip_message = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@localhost PRIVMSG " + channel_name + " :" + result + "\r\n";
+				for (size_t i = 0; i < channel_users.size(); ++i) {
+					send(channel_users[i]->get_fd(), flip_message.c_str(), flip_message.size(), 0);
+				}
+			} else {
+				user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+			}
+		} else {
+			std::string flip_message = "Flipped " + result + "\r\n";
+			send(user.get_fd(), flip_message.c_str(), flip_message.size(), 0);
+		}
+	}
 	else
 		user.send_reply(ERR_UNKNOWNCOMMAND(cmd));
 }
@@ -546,10 +617,10 @@ void Parser::privmsg(int fd, std::string receiver, std::string msg, User &user)
 		bool found = false;
 		for (size_t i = 0; i < users.size(); i++)
 		{
-			if (users[i].get_nick_name() == receiver)
+			if (users[i]->get_nick_name() == receiver)
 			{
 				std::string formatted_msg = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@localhost PRIVMSG " + receiver + " :" + msg + "\r\n";
-				send(users[i].get_fd(), formatted_msg.c_str(), formatted_msg.size(), 0);
+				send(users[i]->get_fd(), formatted_msg.c_str(), formatted_msg.size(), 0);
 				found = true;
 				break;
 			}
@@ -619,8 +690,8 @@ User*	Parser::find_invited_user(const std::string nickname)
 {
 	for (size_t i = 0; i < users.size(); ++i)
 	{
-		if (users[i].get_nick_name() == nickname)
-			return &users[i];
+		if (users[i]->get_nick_name() == nickname)
+			return users[i];
 	}
 	return NULL;
 }
