@@ -357,8 +357,18 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			reason = "Leaving...";
 
 		std::cout << reason << std::endl;
+
 		// todo: broadcast the quit to the channels that the user is in
-		// + clean up the channels from user data
+
+		std::map<std::string, Channel>::iterator it;
+		for (it = channels.begin(); it != channels.end(); ++it)
+		{
+			User *u = find_user_by_nickname(it->second, user.get_nick_name());
+			if (u)
+			{
+				it->second.remove_user(u);
+			}
+		}
 
 		int user_fd = user.get_fd();
 		server->remove_client(user_fd);
@@ -618,6 +628,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 void Parser::privmsg(int fd, std::string receiver, std::string msg, User &user)
 {
 	(void)fd;
+	//should check if the user is in the channel and no text to send 
+	//if there is : aytsifet lmsg kamel ila makanatch atsifet gha lkelma lwla
 	if (receiver[0] == '#')
 	{
 		std::map<std::string, Channel>::iterator it = channels.find(receiver);
@@ -655,6 +667,7 @@ void Parser::privmsg(int fd, std::string receiver, std::string msg, User &user)
 }
 
 void Parser::topic_command(std::string channel_name, std::string new_topic, User& user) {
+	//: jo noqaaaaate ila makanoch GHA LWLA
 	if (channel_name.empty())
 		return;
 	
