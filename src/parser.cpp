@@ -148,7 +148,6 @@ void	Parser::process(struct pollfd event) {
 	{
 		if (bytes_recv < 0)
 			perror("recv");
-		remove_user(user_fd);
 		server->remove_client(user_fd);
 		return ;
 	}
@@ -193,7 +192,8 @@ size_t count_crlf(const std::string& str)
 	return count;
 }
 
-void Parser::parse(User &user) {
+void Parser::parse(User &user)
+{
 	std::string buffer = user.get_buffer();
 	
 	// If buffer doesn't contain at least one complete command, return
@@ -217,19 +217,19 @@ void Parser::parse(User &user) {
 		c.cmd = command.substr(0, cmd_end);
 		std::string remaining = (cmd_end != std::string::npos) ? command.substr(cmd_end + 1) : "";
 		
-		size_t colon_pos = remaining.find(" :");
+		size_t colon_pos = remaining.find(":");
 		
 		if (colon_pos != std::string::npos)
 		{
 			std::string non_trailing = remaining.substr(0, colon_pos);
-			c.trailing = remaining.substr(colon_pos + 2);
+			c.trailing = remaining.substr(colon_pos + 1);
 			
 			std::istringstream ss(non_trailing);
 			std::string param;
 			while (ss >> param)
 				c.args.push_back(param);
 		}
-		else 
+		else
 		{
 			std::istringstream ss(remaining);
 			std::string param;
@@ -261,8 +261,6 @@ void	Parser::process_auth(User & user)
 			user.set_auth(true);
 		}
 	}
-	else
-		return ;
 }
 
 void	Parser::redirect_cmd(User & user, cmd_line & c)
@@ -273,16 +271,14 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 	
 	if (cmd == "PASS")
 	{
-		if (user.get_auth() == true)
-			user.send_reply(ERR_ALREADYREGISTERED(user.get_nick_name()));
-		else if (args.size() != 1)
+		if (args.size() != 1)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("PASS")));
+		else if (user.get_auth() == true)
+			user.send_reply(ERR_ALREADYREGISTERED(user.get_nick_name()));
 		else if (args[0] != server_password)
 			user.send_reply(ERR_PASSWDMISMATCH(user.get_nick_name()));
 		else
-		{
 			process_auth(user);
-		}
 	}
 
 	else if (cmd == "NICK")
@@ -312,11 +308,16 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			std::string	cmp_arg2 = args[2];
 			std::string real_name = trailing.empty() ? args[3] : trailing;
 
-			if (!cmp_arg1.empty() &&
-				!cmp_arg2.empty() &&
+			if (cmp_arg1 == "0" &&
+				cmp_arg2 == "*" &&
 				!user_name.empty() &&
 				!real_name.empty())
 			{
+				if (user.get_auth() == true)
+				{
+					user.send_reply(ERR_ALREADYREGISTRED(user.get_nick_name()));
+					return ;
+				}
 				user.set_real_name("~" + real_name);
 				user.set_user_name(user_name);
 
@@ -343,6 +344,26 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			user.send_reply(RPL_PONG(server_name, args[0]));
 		}
 	}
+
+	else if (cmd == "QUIT")
+	{
+		std::string reason;
+
+		if (!trailing.empty())
+			reason = trailing;
+		else if (args.size() > 0)
+			reason = args[0];
+		else
+			reason = "Leaving...";
+
+		std::cout << reason << std::endl;
+		// todo: broadcast the quit to the channels that the user is in
+		// + clean up the channels from user data
+
+		int user_fd = user.get_fd();
+		server->remove_client(user_fd);
+	}
+
 	else if (cmd == "PRIVMSG")
 	{
 		if (!check_auth(user))
@@ -520,6 +541,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			}
 		}
 	}
+
 	else if (cmd == "TOPIC")
 	{
 		if (!check_auth(user))
@@ -530,12 +552,14 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			topic_command(args[0], trailing, user);
 		
 	}
+
 	else if (cmd == "MODE")
 	{
 		if (!check_auth(user))
 			return ;
 		handleModeCommand(&user, args);
 	}
+
 	else if (cmd == "ROLL")
 	{
 		if (!check_auth(user))

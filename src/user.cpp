@@ -61,7 +61,6 @@ User::~User() {}
 void        User::send_reply(std::string reply)
 {   
     ssize_t bytes_sent = send(fd, reply.c_str(), reply.size(), 0);
-
     if (bytes_sent == -1)
         perror("send");
 }

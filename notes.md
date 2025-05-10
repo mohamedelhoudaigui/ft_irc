@@ -1,1 +1,1 @@
-// handle SIGINT SIGQUIT SIGPIPE
+NICK without params : limechat issue doesnt show fullreply send
