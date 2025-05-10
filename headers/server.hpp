@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <poll.h>
 #include <netinet/in.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstdio>

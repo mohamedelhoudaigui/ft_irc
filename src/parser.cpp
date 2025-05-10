@@ -37,7 +37,6 @@ Parser::~Parser()
 {
 	for (size_t i = 0 ; i < this->users.size(); ++i)
 	{
-		close(users[i]->get_fd());
 		delete users[i];
 	}
 }
@@ -62,8 +61,10 @@ User &    Parser::get_user(int fd) { // use check user before calling this !!
 	throw std::runtime_error("user not found");
 }
 
-void    Parser::add_user(int fd) {
-	if (!check_user(fd)) {
+void    Parser::add_user(int fd)
+{
+	if (!check_user(fd))
+	{
 		User* new_user = new User(fd);
 		new_user->get_socket_address();
 		users.push_back(new_user);
@@ -72,20 +73,33 @@ void    Parser::add_user(int fd) {
 
 void    Parser::remove_user(int fd)
 {
-	try {
+	try
+	{
 		User* user = NULL;
-		for (size_t i = 0; i < users.size(); ++i) {
-			if (users[i]->get_fd() == fd) {
+		for (size_t i = 0; i < users.size(); ++i)
+		{
+			if (users[i]->get_fd() == fd)
+			{
 				user = users[i];
 				users.erase(users.begin() + i);
 				break;
 			}
 		}
-		if (user) {
+		if (user)
+		{
+			std::map<std::string, Channel>::iterator it;
+			for (it = channels.begin(); it != channels.end(); ++it)
+			{
+				User *u = find_user_by_nickname(it->second, user->get_nick_name());
+				if (u)
+				{
+					it->second.remove_user(u);
+				}
+			}
 			delete user;
 		}
 	}
-	catch (...) // ignore no user is found exception
+	catch (...)
 	{}
 }
 
@@ -98,8 +112,6 @@ bool    Parser::check_nick_name(std::string nick)
 	}
 	return (true);
 }
-
-
 
 //-------------------------------
 
@@ -195,8 +207,7 @@ size_t count_crlf(const std::string& str)
 void Parser::parse(User &user)
 {
 	std::string buffer = user.get_buffer();
-	
-	// If buffer doesn't contain at least one complete command, return
+
 	if (!isEnded(user))
 		return;
 
@@ -355,20 +366,6 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			reason = args[0];
 		else
 			reason = "Leaving...";
-
-		std::cout << reason << std::endl;
-
-		// todo: broadcast the quit to the channels that the user is in
-
-		std::map<std::string, Channel>::iterator it;
-		for (it = channels.begin(); it != channels.end(); ++it)
-		{
-			User *u = find_user_by_nickname(it->second, user.get_nick_name());
-			if (u)
-			{
-				it->second.remove_user(u);
-			}
-		}
 
 		int user_fd = user.get_fd();
 		server->remove_client(user_fd);
