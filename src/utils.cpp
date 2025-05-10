@@ -46,9 +46,8 @@ std::string	convert_to_lower(std::string s)
 
 bool	valid_nick_name(std::string s)
 {
-	if (s.size() < 1 ||
-		s == "*" || s[0] == ':' ||
-		s[0] == '#' ||
+	if (s.size() < 1 || s.size() > 20 ||
+		s == "*" || s[0] == ':' || s[0] == '#' ||
 		s.find(' ') != std::string::npos)
 	{
 		return (false);
