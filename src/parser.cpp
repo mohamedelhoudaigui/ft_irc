@@ -451,6 +451,11 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 				}
 				
 				user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
+				// ipadresss
+				//  list
+				// end
+
+				// Topic if not creator
 			}
 		}
 	}
