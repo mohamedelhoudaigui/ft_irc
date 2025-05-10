@@ -114,6 +114,16 @@ void    User::set_purge(bool s)
     this->purge = s;
 }
 
+std::string User::get_host_name()
+{
+    return (this->ip_address);
+}
+
+std::string User::get_ip_address()
+{
+    return (this->ip_address);
+}
+
 std::string User::get_nick_name()
 {
     return (this->nick_name);

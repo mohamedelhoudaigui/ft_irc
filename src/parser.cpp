@@ -403,6 +403,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 				channel_keys.push_back(keys_str);
 			}
 
+			bool userAlreadyInChannel = false;
 			for (size_t i = 0; i < channel_names.size(); ++i) {
 				std::string channel_name = channel_names[i];
 				std::string provided_key = (i < channel_keys.size()) ? channel_keys[i] : "";
@@ -430,7 +431,6 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 						user.send_reply(ERR_CHANNELISFULL(user.get_nick_name(), channel_name));
 						continue;
 					}
-					bool userAlreadyInChannel = false;
 					const std::vector<User *> &current_users = existing_channel.get_users();
 					for (size_t j = 0; j < current_users.size(); j++) {
 						if (current_users[j]->get_fd() == user.get_fd()) {
@@ -451,6 +451,20 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 				}
 				
 				user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
+				if (!userAlreadyInChannel) {
+					Channel *existing_channel = &channels[channel_name];
+					if (existing_channel == nullptr) {
+						return;
+					}
+					existing_channel->add_user(&user);
+					const std::vector<User *> &current_users = existing_channel->get_users();
+					std::string hostname = "localhost";
+					std::string join_message = RPL_JOINMSG(hostname, user.get_ip_address(), channel_name);
+					for (size_t j = 0; j < current_users.size(); j++) {
+						current_users[j]->send_reply(join_message);
+					}
+				}
+				
 				// ipadresss
 				//  list
 				// end
