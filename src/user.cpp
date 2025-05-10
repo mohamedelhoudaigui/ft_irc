@@ -163,3 +163,8 @@ void    User::add_auth_step()
 {
     this->steps += 1;
 }
+
+std::string User::get_ip_address()
+{
+    return ip_address;
+}

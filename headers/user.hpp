@@ -50,6 +50,8 @@ class User
 		int				get_auth_steps();
 		void			add_auth_step();
 
+		std::string		get_ip_address();
+
 		void			send_reply(std::string reply);
 		
 		private:
