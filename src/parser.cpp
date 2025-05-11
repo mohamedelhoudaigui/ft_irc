@@ -326,26 +326,32 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 
 	else if (cmd == "USER")
 	{
-		if (args.size() < 3 || trailing.empty())
+		if ((args.size() == 3 && !trailing.empty()) || (args.size() == 4 && trailing.empty()))
+		{
+			std::string	user_name = args[0];
+			std::string	cmp_arg1 = args[1];
+			std::string	cmp_arg2 = args[2];
+			std::string real_name = trailing.empty() ? args[3] : trailing;
+
+			if (!cmp_arg1.empty() &&
+				!cmp_arg2.empty() &&
+				!user_name.empty() &&
+				!real_name.empty())
+			{
+				user.set_real_name("~" + real_name);
+				user.set_user_name(user_name);
+
+				process_auth(user);
+			}
+			else
+			{
+				user.send_reply(ERR_NEEDMOREPARAMS(std::string("USER")));
+			}
+		}
+		else
 		{
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("USER")));
-			return;
 		}
-		
-		std::string user_name = args[0];
-		std::string hostname = args[1];
-		std::string servername = args[2];
-		std::string real_name = trailing;
-
-		if (user.get_auth() == true)
-		{
-			user.send_reply(ERR_ALREADYREGISTERED(user.get_nick_name()));
-			return;
-		}
-		user.set_real_name(real_name);
-		user.set_user_name(user_name);
-
-		process_auth(user);
 	}
 	else if (cmd == "PING" || cmd == "PONG")
 	{
@@ -441,7 +447,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 						}
 					}
 					if (existing_channel.has_mode('l') && 
-						existing_channel.get_users().size() >= existing_channel.get_user_limit()) {
+						existing_channel.get_users().size() > existing_channel.get_user_limit()) {
+						std::cout << existing_channel.get_user_limit() << " and " << existing_channel.get_users().size() << std::endl;
 						user.send_reply(ERR_CHANNELISFULL(user.get_nick_name(), channel_name));
 						continue;
 					}
@@ -464,7 +471,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 					channel_ref.set_operators_mode(true, &user);
 				}
 				
-				user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
+				// user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
 				if (!userAlreadyInChannel) {
 					Channel *existing_channel = &channels[channel_name];
 					if (existing_channel == NULL) {
