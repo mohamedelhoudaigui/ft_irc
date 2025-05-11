@@ -573,13 +573,12 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			return ;
 		if (args.size() < 1)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("TOPIC")));
-		else if (!trailing.empty() && trailing[0] != ':')
+		else if (!trailing.empty())
 		{
-			std::string topic = first_word(trailing);
-			topic_command(args[0], topic, user);
+			topic_command(args[0], trailing, user);
 		}
 		else
-			topic_command(args[0], trailing, user);
+			topic_command(args[0], args[1], user);
 		
 	}
 
