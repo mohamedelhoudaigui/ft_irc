@@ -37,7 +37,6 @@ Parser::~Parser()
 {
 	for (size_t i = 0 ; i < this->users.size(); ++i)
 	{
-		close(users[i]->get_fd());
 		delete users[i];
 	}
 }
@@ -62,8 +61,10 @@ User &    Parser::get_user(int fd) { // use check user before calling this !!
 	throw std::runtime_error("user not found");
 }
 
-void    Parser::add_user(int fd) {
-	if (!check_user(fd)) {
+void    Parser::add_user(int fd)
+{
+	if (!check_user(fd))
+	{
 		User* new_user = new User(fd);
 		new_user->get_socket_address();
 		users.push_back(new_user);
@@ -72,20 +73,33 @@ void    Parser::add_user(int fd) {
 
 void    Parser::remove_user(int fd)
 {
-	try {
+	try
+	{
 		User* user = NULL;
-		for (size_t i = 0; i < users.size(); ++i) {
-			if (users[i]->get_fd() == fd) {
+		for (size_t i = 0; i < users.size(); ++i)
+		{
+			if (users[i]->get_fd() == fd)
+			{
 				user = users[i];
 				users.erase(users.begin() + i);
 				break;
 			}
 		}
-		if (user) {
+		if (user)
+		{
+			std::map<std::string, Channel>::iterator it;
+			for (it = channels.begin(); it != channels.end(); ++it)
+			{
+				User *u = find_user_by_nickname(it->second, user->get_nick_name());
+				if (u)
+				{
+					it->second.remove_user(u);
+				}
+			}
 			delete user;
 		}
 	}
-	catch (...) // ignore no user is found exception
+	catch (...)
 	{}
 }
 
@@ -98,8 +112,6 @@ bool    Parser::check_nick_name(std::string nick)
 	}
 	return (true);
 }
-
-
 
 //-------------------------------
 
@@ -195,8 +207,7 @@ size_t count_crlf(const std::string& str)
 void Parser::parse(User &user)
 {
 	std::string buffer = user.get_buffer();
-	
-	// If buffer doesn't contain at least one complete command, return
+
 	if (!isEnded(user))
 		return;
 
@@ -258,10 +269,24 @@ void	Parser::process_auth(User & user)
 		if (user.get_auth_steps() == 3)
 		{
 			user.send_reply(RPL_WELCOME(user.get_nick_name(), std::string("welcome to irc server !")));
+			user.send_reply(RPL_YOURHOST(user.get_nick_name()));
+			user.send_reply(RPL_CREATED(user.get_nick_name(), server->get_creation_time()));
 			user.set_auth(true);
 		}
 	}
 }
+
+std::string first_word(const std::string& input) {
+    std::string result;
+    std::size_t i = 0;
+
+    while (i < input.length() && !std::isspace(input[i])) {
+        result += input[i];
+        i++;
+    }
+    return result;
+}
+
 
 void	Parser::redirect_cmd(User & user, cmd_line & c)
 {
@@ -345,10 +370,6 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		else
 			reason = "Leaving...";
 
-		std::cout << reason << std::endl;
-		// todo: broadcast the quit to the channels that the user is in
-		// + clean up the channels from user data
-
 		int user_fd = user.get_fd();
 		server->remove_client(user_fd);
 	}
@@ -357,10 +378,14 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 	{
 		if (!check_auth(user))
 			return ;
-		if (args.size() < 1 || trailing.empty())
+		if (args.size() < 1 && trailing.empty())
 			user.send_reply(ERR_NOTEXTTOSEND());
+		else if (!trailing.empty())
+		{
+			privmsg(args[0], trailing, user);
+		}
 		else
-			privmsg(user.get_fd(), args[0], trailing, user);
+			privmsg(args[0], args[1], user);
 		
 	}
 	else if (cmd == "JOIN")
@@ -569,6 +594,11 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			return ;
 		if (args.size() < 1)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("TOPIC")));
+		else if (!trailing.empty() && trailing[0] != ':')
+		{
+			std::string topic = first_word(trailing);
+			topic_command(args[0], topic, user);
+		}
 		else
 			topic_command(args[0], trailing, user);
 		
@@ -636,23 +666,28 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		user.send_reply(ERR_UNKNOWNCOMMAND(cmd));
 }
 
-void Parser::privmsg(int fd, std::string receiver, std::string msg, User &user)
+void Parser::privmsg(std::string receiver, std::string msg, User &user)
 {
-	(void)fd;
 	if (receiver[0] == '#')
 	{
 		std::map<std::string, Channel>::iterator it = channels.find(receiver);
 		if (it != channels.end())
 		{
 			Channel &channel = it->second;
-			const std::vector<User *> &channel_users = channel.get_users();
-			std::string formatted_msg = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@localhost PRIVMSG " + receiver + " :" + msg + "\r\n";
-			for (size_t i = 0; i < channel_users.size(); ++i)
+			User *sender = find_user_by_nickname(it->second, user.get_nick_name());
+			if (sender)
 			{
-				User *target = channel_users[i];
-				if (target->get_fd() != user.get_fd())
-					send(target->get_fd(), formatted_msg.c_str(), formatted_msg.size(), 0);
+				const std::vector<User *> &channel_users = channel.get_users();
+				std::string formatted_msg = ":" + user.get_nick_name() + "!" + user.get_user_name() + user.get_ip_address() + " PRIVMSG " + receiver + " :" + msg + "\r\n";
+				for (size_t i = 0; i < channel_users.size(); ++i)
+				{
+					User *target = channel_users[i];
+					if (target->get_fd() != user.get_fd())
+						send(target->get_fd(), formatted_msg.c_str(), formatted_msg.size(), 0);
+				}
 			}
+			else
+				user.send_reply(ERR_NOTONCHANNEL(user.get_nick_name(), channel.get_name()));
 		}
 		else
 			user.send_reply(ERR_NOSUCHCHANNEL(receiver));
@@ -664,7 +699,7 @@ void Parser::privmsg(int fd, std::string receiver, std::string msg, User &user)
 		{
 			if (users[i]->get_nick_name() == receiver)
 			{
-				std::string formatted_msg = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@localhost PRIVMSG " + receiver + " :" + msg + "\r\n";
+				std::string formatted_msg = ":" + user.get_nick_name() + "!" + user.get_user_name() + user.get_ip_address() + " PRIVMSG " + receiver + " :" + msg + "\r\n";
 				send(users[i]->get_fd(), formatted_msg.c_str(), formatted_msg.size(), 0);
 				found = true;
 				break;
@@ -742,7 +777,7 @@ User*	Parser::find_invited_user(const std::string nickname)
 }
 
 
-void Channel::apply_modes(const std::string &mode_string, const std::vector<std::string> &params, Parser &parser)
+void Channel::apply_modes(const std::string &mode_string, const std::vector<std::string> &params, Parser &parser, User *user, Channel &channel)
 {
 	bool adding = true;
 	size_t param_index = 0;
@@ -801,6 +836,13 @@ void Channel::apply_modes(const std::string &mode_string, const std::vector<std:
 				set_user_limits(false, 0);
 			}
 		}
+		else
+		{
+			(void)user;
+			(void)channel;
+			//need to fix RPL_UMODEIS
+		}
+		
 	}
 }
 
@@ -842,7 +884,7 @@ void Parser::handleModeCommand(User* user, std::vector<std::string>& args)
 		mode_args.push_back(args[i]);
 	}
 
-	channel.apply_modes(mode_string, mode_args, *this);
+	channel.apply_modes(mode_string, mode_args, *this, user, channel);
 }
 
 // -------------------------------

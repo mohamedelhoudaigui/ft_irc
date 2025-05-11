@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <cerrno>
-#include <cstring>
 #include <map>
 
 #include "user.hpp"
@@ -60,7 +59,7 @@ class Parser
 
             void	        process_auth(User & user);
             //ADDED BY CAZIANE
-            void            privmsg(int fd, std::string receiver, std::string msg, User &user);
+            void            privmsg(std::string receiver, std::string msg, User &user);
             void            topic(User &user, std::string channel_name, std::string new_topic, Channel &channel);
             void            handleModeCommand(User* user, std::vector<std::string>& args);
             void	        topic_command(std::string channel_name, std::string new_topic, User& user);

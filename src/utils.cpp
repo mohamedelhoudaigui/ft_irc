@@ -55,3 +55,16 @@ bool	valid_nick_name(std::string s)
 	return (true);
 }
 
+std::string	get_now_time()
+{
+	time_t rawtime;
+    time(&rawtime);
+
+    struct tm *timeinfo;
+    timeinfo = localtime(&rawtime);
+
+    char buffer[80];
+    strftime(buffer, 80, "%a %b %d %H:%M:%S %Y", timeinfo);
+
+	return std::string(buffer);
+}

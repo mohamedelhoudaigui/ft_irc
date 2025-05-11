@@ -8,7 +8,8 @@ Server::Server() {}
 Server::Server(int _port, std::string _password):
 port(_port),
 password(_password),
-parser(_password, this)
+parser(_password, this),
+creation_time(get_now_time())
 {}
 
 const Server & Server::operator=(const Server & other)
@@ -21,6 +22,7 @@ const Server & Server::operator=(const Server & other)
 		this->port = other.port;
 		this->password = other.password;
         this->parser = other.parser;
+        this->creation_time = other.creation_time;
 	}
 
 	return (*this);
@@ -42,6 +44,11 @@ Server::~Server()
 }
 
 // server methods:
+
+std::string    Server::get_creation_time()
+{
+    return (this->creation_time);
+}
 
 void	Server::set_nonblocking(int fd)
 {
