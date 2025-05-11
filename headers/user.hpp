@@ -35,7 +35,6 @@ class User
 		void			set_purge(bool s);
 
 		std::string		get_host_name();
-		std::string		get_ip_address();
 		std::string		get_nick_name();
 		void			set_nick_name(std::string nick);
 
