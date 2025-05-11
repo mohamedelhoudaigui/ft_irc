@@ -387,15 +387,15 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 	{
 		if (!check_auth(user))
 			return ;
-		if (args.size() < 1 || trailing.empty())
+		if (args.size() < 1 && trailing.empty())
 			user.send_reply(ERR_NOTEXTTOSEND());
-		else if (!trailing.empty() && trailing[0] != ':')
+		else if (!trailing.empty())
 		{
-			std::string msg = first_word(trailing);
-			privmsg(args[0], msg, user);
+			// std::string msg = first_word(trailing);
+			privmsg(args[0], trailing, user);
 		}
 		else
-			privmsg(args[0], trailing, user);
+			privmsg(args[0], args[1], user);
 		
 	}
 	else if (cmd == "JOIN")
