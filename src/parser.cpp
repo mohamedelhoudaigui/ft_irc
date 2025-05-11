@@ -816,9 +816,7 @@ void Channel::apply_modes(const std::string &mode_string, const std::vector<std:
 		}
 		else
 		{
-			(void)user;
-			(void)channel;
-			//need to fix RPL_UMODEIS
+			user->send_reply(RPL_UMODEIS(user->get_nick_name(), channel.get_modes()));
 		}
 		
 	}
