@@ -269,6 +269,8 @@ void	Parser::process_auth(User & user)
 		if (user.get_auth_steps() == 3)
 		{
 			user.send_reply(RPL_WELCOME(user.get_nick_name(), std::string("welcome to irc server !")));
+			user.send_reply(RPL_YOURHOST(user.get_nick_name()));
+			user.send_reply(RPL_CREATED(user.get_nick_name(), server->get_creation_time()));
 			user.set_auth(true);
 		}
 	}
@@ -391,7 +393,6 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			user.send_reply(ERR_NOTEXTTOSEND());
 		else if (!trailing.empty())
 		{
-			// std::string msg = first_word(trailing);
 			privmsg(args[0], trailing, user);
 		}
 		else
