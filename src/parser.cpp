@@ -301,37 +301,26 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 
 	else if (cmd == "USER")
 	{
-		if ((args.size() == 3 && !trailing.empty()) || (args.size() == 4 && trailing.empty()))
-		{
-			std::string	user_name = args[0];
-			std::string	cmp_arg1 = args[1];
-			std::string	cmp_arg2 = args[2];
-			std::string real_name = trailing.empty() ? args[3] : trailing;
-
-			if (cmp_arg1 == "0" &&
-				cmp_arg2 == "*" &&
-				!user_name.empty() &&
-				!real_name.empty())
-			{
-				if (user.get_auth() == true)
-				{
-					user.send_reply(ERR_ALREADYREGISTRED(user.get_nick_name()));
-					return ;
-				}
-				user.set_real_name("~" + real_name);
-				user.set_user_name(user_name);
-
-				process_auth(user);
-			}
-			else
-			{
-				user.send_reply(ERR_NEEDMOREPARAMS(std::string("USER")));
-			}
-		}
-		else
+		if (args.size() < 3 || trailing.empty())
 		{
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("USER")));
+			return;
 		}
+		
+		std::string user_name = args[0];
+		std::string hostname = args[1];
+		std::string servername = args[2];
+		std::string real_name = trailing;
+
+		if (user.get_auth() == true)
+		{
+			user.send_reply(ERR_ALREADYREGISTERED(user.get_nick_name()));
+			return;
+		}
+		user.set_real_name(real_name);
+		user.set_user_name(user_name);
+
+		process_auth(user);
 	}
 	else if (cmd == "PING" || cmd == "PONG")
 	{
@@ -453,16 +442,29 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 				user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
 				if (!userAlreadyInChannel) {
 					Channel *existing_channel = &channels[channel_name];
-					if (existing_channel == nullptr) {
+					if (existing_channel == NULL) {
 						return;
 					}
 					existing_channel->add_user(&user);
 					const std::vector<User *> &current_users = existing_channel->get_users();
-					std::string hostname = "localhost";
-					std::string join_message = RPL_JOINMSG(hostname, user.get_ip_address(), channel_name);
+					
+					std::string join_message = RPL_JOINMSG(user.get_nick_name(), user.get_ip_address(), channel_name);
 					for (size_t j = 0; j < current_users.size(); j++) {
 						current_users[j]->send_reply(join_message);
 					}
+
+					std::string names_list;
+					for (size_t j = 0; j < current_users.size(); j++) {
+						if (j > 0) names_list += " ";
+						if (existing_channel->is_operator(current_users[j]))
+							names_list += "@";
+						names_list += current_users[j]->get_nick_name();
+					}
+					user.send_reply(RPL_NAMREPLY(user.get_nick_name(), channel_name, names_list));
+					user.send_reply(RPL_ENDOFNAMES(user.get_nick_name(), channel_name));
+
+					if (!existing_channel->get_topic().empty())
+						user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, existing_channel->get_topic()));
 				}
 				
 				// ipadresss

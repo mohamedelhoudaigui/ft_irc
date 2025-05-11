@@ -40,13 +40,12 @@
 #define RPL_NOTOPIC(sender, channel)PREFIX " 331 " + sender + " " + channel + " :No topic is set" + POSTFIX
 #define RPL_INVITING(nickname, targnick, targchan)  ": 341 " + nickname + " " + targnick + " " + targchan + POSTFIX
 #define RPL_INVITE(sender, target, channel)":" + sender + " INVITE " + target + " " + channel + POSTFIX
-#define RPL_INVITING(nickname, targnick, targchan)  ": 341 " + nickname + " " + targnick + " " + targchan + POSTFIX
 #define RPL_JOINMSG(hostname, ipaddress, channel)(":" + hostname + "@" + ipaddress + " JOIN " + channel + POSTFIX)
 #define RPL_JOIN(sender, channel)":" + sender + " JOIN :" + channel + POSTFIX
 #define RPL_CHANNELMODEIS(hostname, channel, mode)(":" + hostname + " MODE " + channel + " " + mode + POSTFIX)
-#define RPL_UMODEIS(hostname, channel, mode, user)":" + hostname + " MODE " + channel + " " + mode + " " + user + POSTFIX
+#define RPL_UMODEIS(nickname, modes) PREFIX "221 " + nickname + " :" + modes + POSTFIX
 #define RPL_PONG(server_name, token) "PONG " + server_name + token + POSTFIX
 #define RPL_KICK(sender, target, channel)":" + sender + " KICK " + target + " " + channel + POSTFIX
-
 #define RPL_TOPICWHOTIME(nick, channel, setter, time) PREFIX "333 " + std::string(nick) + " " + std::string(channel) + " " + std::string(setter) + " " + std::string(time) + POSTFIX
+
 #endif
