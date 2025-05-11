@@ -333,16 +333,11 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			std::string	cmp_arg2 = args[2];
 			std::string real_name = trailing.empty() ? args[3] : trailing;
 
-			if (cmp_arg1 == "0" &&
-				cmp_arg2 == "*" &&
+			if (!cmp_arg1.empty() &&
+				!cmp_arg2.empty() &&
 				!user_name.empty() &&
 				!real_name.empty())
 			{
-				if (user.get_auth() == true)
-				{
-					user.send_reply(ERR_ALREADYREGISTRED(user.get_nick_name()));
-					return ;
-				}
 				user.set_real_name("~" + real_name);
 				user.set_user_name(user_name);
 
@@ -428,6 +423,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 				channel_keys.push_back(keys_str);
 			}
 
+			bool userAlreadyInChannel = false;
 			for (size_t i = 0; i < channel_names.size(); ++i) {
 				std::string channel_name = channel_names[i];
 				std::string provided_key = (i < channel_keys.size()) ? channel_keys[i] : "";
@@ -451,11 +447,11 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 						}
 					}
 					if (existing_channel.has_mode('l') && 
-						existing_channel.get_users().size() >= existing_channel.get_user_limit()) {
+						existing_channel.get_users().size() > existing_channel.get_user_limit()) {
+						std::cout << existing_channel.get_user_limit() << " and " << existing_channel.get_users().size() << std::endl;
 						user.send_reply(ERR_CHANNELISFULL(user.get_nick_name(), channel_name));
 						continue;
 					}
-					bool userAlreadyInChannel = false;
 					const std::vector<User *> &current_users = existing_channel.get_users();
 					for (size_t j = 0; j < current_users.size(); j++) {
 						if (current_users[j]->get_fd() == user.get_fd()) {
@@ -475,7 +471,39 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 					channel_ref.set_operators_mode(true, &user);
 				}
 				
-				user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
+				// user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
+				if (!userAlreadyInChannel) {
+					Channel *existing_channel = &channels[channel_name];
+					if (existing_channel == NULL) {
+						return;
+					}
+					existing_channel->add_user(&user);
+					const std::vector<User *> &current_users = existing_channel->get_users();
+					
+					std::string join_message = RPL_JOINMSG(user.get_nick_name(), user.get_ip_address(), channel_name);
+					for (size_t j = 0; j < current_users.size(); j++) {
+						current_users[j]->send_reply(join_message);
+					}
+
+					std::string names_list;
+					for (size_t j = 0; j < current_users.size(); j++) {
+						if (j > 0) names_list += " ";
+						if (existing_channel->is_operator(current_users[j]))
+							names_list += "@";
+						names_list += current_users[j]->get_nick_name();
+					}
+					user.send_reply(RPL_NAMREPLY(user.get_nick_name(), channel_name, names_list));
+					user.send_reply(RPL_ENDOFNAMES(user.get_nick_name(), channel_name));
+
+					if (!existing_channel->get_topic().empty())
+						user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, existing_channel->get_topic()));
+				}
+				
+				// ipadresss
+				//  list
+				// end
+
+				// Topic if not creator
 			}
 		}
 	}
