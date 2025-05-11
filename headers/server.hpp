@@ -39,6 +39,7 @@ class Server
 		void    user_action(struct pollfd event);
 		void	remove_client(int fd);
 		void	start();
+		std::string		get_creation_time();
 
 	private:
 
@@ -50,6 +51,7 @@ class Server
 		int 				port;
 		std::string 		password;
 		Parser				parser;
+		std::string			creation_time;
 };
 
 #endif
