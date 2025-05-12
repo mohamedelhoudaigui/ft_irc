@@ -447,7 +447,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 						}
 					}
 					if (existing_channel.has_mode('l') && 
-						existing_channel.get_users().size() > existing_channel.get_user_limit()) {
+						existing_channel.get_users().size() >= existing_channel.get_user_limit()) {
 						std::cout << existing_channel.get_user_limit() << " and " << existing_channel.get_users().size() << std::endl;
 						user.send_reply(ERR_CHANNELISFULL(user.get_nick_name(), channel_name));
 						continue;
@@ -470,17 +470,16 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 					channel_ref.add_user(&user);
 					channel_ref.set_operators_mode(true, &user);
 				}
-				
-				// user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
+
+				user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
 				if (!userAlreadyInChannel) {
 					Channel *existing_channel = &channels[channel_name];
 					if (existing_channel == NULL) {
 						return;
 					}
-					existing_channel->add_user(&user);
 					const std::vector<User *> &current_users = existing_channel->get_users();
 					
-					std::string join_message = RPL_JOINMSG(user.get_nick_name(), user.get_ip_address(), channel_name);
+					std::string join_message = RPL_JOINMSG(user.get_nick_name(), user.get_user_name(), channel_name);
 					for (size_t j = 0; j < current_users.size(); j++) {
 						current_users[j]->send_reply(join_message);
 					}
