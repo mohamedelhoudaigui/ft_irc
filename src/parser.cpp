@@ -440,7 +440,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 						user.send_reply(ERR_INVITEONLYCHAN(user.get_nick_name(), channel_name));
 						continue;
 					}
-					if (existing_channel.has_mode('k') && !existing_channel.is_invited(&user)) {
+					if (existing_channel.has_mode('k')) {
 						if (provided_key.empty() || provided_key != existing_channel.get_key()) {
 							user.send_reply(ERR_BADCHANNELKEY(user.get_nick_name(), channel_name));
 							continue;
