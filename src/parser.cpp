@@ -558,8 +558,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		else {
 			std::string channel_name = args[0];
 			std::string kicked = args[1];
-	
-			std::cout << "KICK: " << kicked << " IN " << channel_name << std::endl;
+			std::string reason = trailing.empty() ? "Kicked by " + user.get_nick_name() : trailing.substr(1);
 	
 			if (channel_name[0] != '#')
 					user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
@@ -576,8 +575,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 					User *selected_user = find_user_by_nickname(it->second, kicked);
 					if (selected_user) {
 						std::string kick_message = ":" + user.get_nick_name() + "!" + user.get_user_name() 
-						+ "@localhost KICK " + channel_name + " " + kicked + " :Kicked by " 
-						+ user.get_nick_name() + "\r\n";
+						+ "@localhost KICK " + channel_name + " " + kicked + " :" + reason + "\r\n";
 						const std::vector<User *> &channel_users = channel.get_users();
 						for (size_t i = 0; i < channel_users.size(); ++i) {
 							send(channel_users[i]->get_fd(), kick_message.c_str(), kick_message.size(), 0);
