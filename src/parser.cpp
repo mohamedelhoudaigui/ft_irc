@@ -10,16 +10,15 @@ Parser::Parser(): server_password(""), server(NULL) {}
 
 Parser::Parser(std::string password, Server* server): server_password(password), server(server) {}
 
-const Parser & Parser::operator=(const Parser & other) {
+const Parser & Parser::operator=(const Parser & other)
+{
    if (this != &other)
    {
 		this->server_password = other.server_password;
-		// Clear existing users
 		for (size_t i = 0; i < this->users.size(); ++i) {
 			delete this->users[i];
 		}
 		this->users.clear();
-		// Copy users
 		for (size_t i = 0; i < other.users.size(); ++i) {
 			User* new_user = new User(*other.users[i]);
 			this->users.push_back(new_user);
@@ -52,13 +51,14 @@ bool    Parser::check_user(int fd) {
 	return (false);
 }
 
-User &    Parser::get_user(int fd) { // use check user before calling this !!
+User*    Parser::get_user(int fd)
+{
 	for (size_t i = 0; i < users.size(); ++i)
 	{
 		if (users[i]->get_fd() == fd)
-			return (*users[i]);
+			return (users[i]);
 	}
-	throw std::runtime_error("user not found");
+	return (NULL);
 }
 
 void    Parser::add_user(int fd)
@@ -71,36 +71,39 @@ void    Parser::add_user(int fd)
 	}
 }
 
-void    Parser::remove_user(int fd)
+void	Parser::broadcast(User& user, std::string msg)
 {
-	try
+	std::map<std::string, Channel>::iterator it;
+	for (it = channels.begin(); it != channels.end(); ++it)
 	{
-		User* user = NULL;
-		for (size_t i = 0; i < users.size(); ++i)
+		User *u = find_user_by_nickname(it->second, user.get_nick_name());
+		if (u)
 		{
-			if (users[i]->get_fd() == fd)
-			{
-				user = users[i];
-				users.erase(users.begin() + i);
-				break;
-			}
-		}
-		if (user)
-		{
-			std::map<std::string, Channel>::iterator it;
-			for (it = channels.begin(); it != channels.end(); ++it)
-			{
-				User *u = find_user_by_nickname(it->second, user->get_nick_name());
-				if (u)
-				{
-					it->second.remove_user(u);
-				}
-			}
-			delete user;
+			privmsg("#" + it->second.get_name(), msg, user);
 		}
 	}
-	catch (...)
-	{}
+}
+
+void    Parser::remove_user(int fd)
+{
+	User* user = get_user(fd);
+	if (!user)
+		return ;
+
+	std::vector<User*>::iterator user_it = std::find(users.begin(), users.end(), user);
+	if (user_it != users.end())
+		users.erase(user_it);
+
+	std::map<std::string, Channel>::iterator it;
+	for (it = channels.begin(); it != channels.end(); ++it)
+	{
+		User *u = find_user_by_nickname(it->second, user->get_nick_name());
+		if (u)
+		{
+			it->second.remove_user(u);
+		}
+	}
+	delete user;
 }
 
 bool    Parser::check_nick_name(std::string nick)
@@ -112,8 +115,6 @@ bool    Parser::check_nick_name(std::string nick)
 	}
 	return (true);
 }
-
-//-------------------------------
 
 void	cmd_line::clear()
 {
@@ -149,7 +150,9 @@ void	Parser::process(struct pollfd event) {
 	int user_fd = event.fd;
 
 	add_user(user_fd);
-	User & user = get_user(user_fd);
+	User* user = get_user(user_fd);
+	if (!user)
+		return ;
 
 	char buffer[BUFFER_SIZE];
 	memset(buffer, 0, BUFFER_SIZE);
@@ -165,7 +168,7 @@ void	Parser::process(struct pollfd event) {
 	}
 	else
 	{
-		process_buffer(user, buffer, bytes_recv);
+		process_buffer(*user, buffer, bytes_recv);
 	}
 	
 }
@@ -304,7 +307,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			user.send_reply(ERR_PASSWDMISMATCH(user.get_nick_name()));
 		else
 		{
-			user.set_pass_step(true);
+			if (!user.get_auth())
+				user.set_pass_step(true);
 			process_auth(user);
 		}
 	}
@@ -321,8 +325,10 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		{
 			std::string old_nick = user.get_nick_name();
 			user.set_nick_name(args[0]);
-			user.set_nick_step(true);
+			if (!user.get_auth())
+				user.set_nick_step(true);
 			user.send_reply(RPL_NICK(old_nick, user.get_nick_name()));
+			broadcast(user, RPL_NICK(old_nick, user.get_nick_name()));
 
 			process_auth(user);
 		}
@@ -344,7 +350,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			{
 				user.set_real_name("~" + real_name);
 				user.set_user_name(user_name);
-				user.set_user_step(true);
+				if (!user.get_auth())
+					user.set_user_step(true);
 
 				process_auth(user);
 			}

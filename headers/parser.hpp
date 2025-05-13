@@ -53,7 +53,7 @@ class Parser
 
             void			add_user(int fd);
             void			remove_user(int fd);
-            User &			get_user(int fd);
+            User*			get_user(int fd);
             bool			check_user(int fd);
             bool			check_nick_name(std::string nick);
 
@@ -67,6 +67,8 @@ class Parser
 
             User*           find_user_by_nickname(Channel &channel,const std::string nickname);
             User*           find_invited_user(const std::string nickname);
+
+            void	        broadcast(User& user, std::string msg);
 
     private:
         std::string                     server_password;

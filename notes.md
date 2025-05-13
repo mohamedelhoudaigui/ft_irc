@@ -1,1 +1,1 @@
-NICK without params : limechat issue doesnt show fullreply send
+need to add broadcast
