@@ -5,7 +5,9 @@
 User::User():
                     fd(-1),
                     ip_address(""),
-                    steps(0),
+                    nick_step(false),
+                    user_step(false),
+                    pass_step(false),
                     auth(false),
                     user_name(""),
                     real_name(""),
@@ -16,7 +18,9 @@ User::User():
 User::User(int _fd):
                     fd(_fd),
                     ip_address(get_socket_address()),
-                    steps(0),
+                    nick_step(false),
+                    user_step(false),
+                    pass_step(false),
                     auth(false),
                     user_name(""),
                     real_name(""),
@@ -35,8 +39,10 @@ const User & User::operator=(const User & other)
 	if (this != &other) {
 		this->fd = other.fd;
 		this->ip_address = other.ip_address;
-        this->steps = other.steps;
         this->auth = other.auth;
+        this->nick_step = other.nick_step;
+        this->user_step = other.user_step;
+        this->pass_step = other.pass_step;
         this->user_name = other.user_name;
         this->real_name = other.real_name;
         this->nick_name = other.nick_name;
@@ -159,17 +165,38 @@ void    User::set_auth(bool a)
     this->auth = a;
 }
 
-int     User::get_auth_steps()
-{
-    return (steps);
-}
-
-void    User::add_auth_step()
-{
-    this->steps += 1;
-}
-
 std::string User::get_ip_address()
 {
     return ip_address;
+}
+
+
+bool		User::get_nick_step()
+{
+    return (this->nick_step);
+}
+
+void		User::set_nick_step(bool a)
+{
+    this->nick_step = a;
+}
+
+bool		User::get_user_step()
+{
+    return (this->user_step);
+}
+
+void		User::set_user_step(bool a)
+{
+    this->user_step = a;
+}
+
+bool		User::get_pass_step()
+{
+    return (this->pass_step);
+}
+
+void		User::set_pass_step(bool a)
+{
+    this->pass_step = a;
 }

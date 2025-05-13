@@ -263,20 +263,20 @@ void Parser::parse(User &user)
 
 void	Parser::process_auth(User & user)
 {
-	if (!user.get_auth())
+	if (user.get_nick_step() && user.get_user_step() && user.get_pass_step())
 	{
-		user.add_auth_step();
-		if (user.get_auth_steps() == 3)
-		{
-			user.send_reply(RPL_WELCOME(user.get_nick_name(), std::string("welcome to irc server !")));
-			user.send_reply(RPL_YOURHOST(user.get_nick_name()));
-			user.send_reply(RPL_CREATED(user.get_nick_name(), server->get_creation_time()));
-			user.set_auth(true);
-		}
+		user.send_reply(RPL_WELCOME(user.get_nick_name(), std::string("welcome to irc server !")));
+		user.send_reply(RPL_YOURHOST(user.get_nick_name()));
+		user.send_reply(RPL_CREATED(user.get_nick_name(), server->get_creation_time()));
+		user.set_auth(true);
+		user.set_nick_step(false);
+		user.set_user_step(false);
+		user.set_pass_step(false);
 	}
 }
 
-std::string first_word(const std::string& input) {
+std::string first_word(const std::string& input)
+{
     std::string result;
     std::size_t i = 0;
 
@@ -303,7 +303,10 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		else if (args[0] != server_password)
 			user.send_reply(ERR_PASSWDMISMATCH(user.get_nick_name()));
 		else
+		{
+			user.set_pass_step(true);
 			process_auth(user);
+		}
 	}
 
 	else if (cmd == "NICK")
@@ -318,6 +321,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		{
 			std::string old_nick = user.get_nick_name();
 			user.set_nick_name(args[0]);
+			user.set_nick_step(true);
 			user.send_reply(RPL_NICK(old_nick, user.get_nick_name()));
 
 			process_auth(user);
@@ -340,6 +344,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			{
 				user.set_real_name("~" + real_name);
 				user.set_user_name(user_name);
+				user.set_user_step(true);
 
 				process_auth(user);
 			}
@@ -557,7 +562,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			std::string reason = trailing.empty() ? "Kicked by " + user.get_nick_name() : trailing.substr(1);
 	
 			if (channel_name[0] != '#')
-					user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+				user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
 			else {
 				std::map<std::string, Channel>::iterator it = channels.find(channel_name);
 				if (it != channels.end()) {

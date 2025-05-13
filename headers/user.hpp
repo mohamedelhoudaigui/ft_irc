@@ -47,8 +47,14 @@ class User
 		bool			get_auth();
 		void			set_auth(bool a);
 
-		int				get_auth_steps();
-		void			add_auth_step();
+		bool			get_nick_step();
+		void			set_nick_step(bool a);
+
+		bool			get_user_step();
+		void			set_user_step(bool a);
+
+		bool			get_pass_step();
+		void			set_pass_step(bool a);
 
 		std::string		get_ip_address();
 
@@ -58,7 +64,9 @@ class User
 			int				fd;
 			std::string		ip_address;
 
-			int				steps;
+			bool			nick_step;
+			bool			user_step;
+			bool			pass_step;
 			bool			auth;
 
 			std::string 	user_name;
