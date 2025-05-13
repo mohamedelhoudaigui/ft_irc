@@ -384,6 +384,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 	{
 		if (!check_auth(user))
 			return ;
+		if (args[0].empty())
+			user.send_reply(ERR_NORECIPIENT(user.get_nick_name(), "PRIVMSG"));
 		if (args.size() < 1 && trailing.empty())
 			user.send_reply(ERR_NOTEXTTOSEND());
 		else if (!trailing.empty())
@@ -866,6 +868,7 @@ void Parser::handleModeCommand(User* user, std::vector<std::string>& args)
 
 	if (args.size() == 1) {
         user->send_reply(RPL_CHANNELMODEIS(channel_name, channel_name, channel.get_modes()));
+		user->send_reply(RPL_CREATED(channel_name, server->get_creation_time()));
         return;
     }
 

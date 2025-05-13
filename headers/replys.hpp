@@ -29,6 +29,7 @@
 #define ERR_INCORPASS(nickname)(": 464 " + nickname + " :Password incorrect !" + POSTFIX )
 #define ERR_NOTREGISTERED(nickname)(": 464 " + nickname + " :You are not registered !" + POSTFIX )
 #define ERR_BADCHANNELKEY(nickname, channel)(": 475 " + nickname + " " + channel + " :Cannot join channel (+k)" + POSTFIX)
+#define ERR_NORECIPIENT(nickname, command)(": 411 " + nickname + " :No recipient given (" + command + ")" + POSTFIX)
 //Replies :
 
 #define RPL_WELCOME(sender, msg) PREFIX "001 " + sender + " : " + msg + POSTFIX
