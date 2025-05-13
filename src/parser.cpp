@@ -489,7 +489,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 						if (j > 0) names_list += " ";
 						if (existing_channel->is_operator(current_users[j]))
 							names_list += "@";
-						names_list += current_users[j]->get_nick_name();
+						names_list += current_users[j]->get_nick_name() + "!" + current_users[j]->get_user_name() + "@" + current_users[j]->get_ip_address();
 					}
 					user.send_reply(RPL_NAMREPLY(user.get_nick_name(), channel_name, names_list));
 					user.send_reply(RPL_ENDOFNAMES(user.get_nick_name(), channel_name));
@@ -497,12 +497,6 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 					if (!existing_channel->get_topic().empty())
 						user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, existing_channel->get_topic()));
 				}
-				
-				// ipadresss
-				//  list
-				// end
-
-				// Topic if not creator
 			}
 		}
 	}
