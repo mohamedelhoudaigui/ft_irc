@@ -589,7 +589,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 						const std::vector<User *> &channel_users = channel.get_users();
 						for (size_t i = 0; i < channel_users.size(); ++i) {
 							send(channel_users[i]->get_fd(), kick_message.c_str(), kick_message.size(), 0);
-						}else
+						}	
+						// else
 						// 	topic_command(args[0], args[1], user);
 						channel.remove_user(selected_user);
 						std::cout << "User " << kicked << " removed from channel " << channel_name << std::endl;
