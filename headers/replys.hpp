@@ -3,6 +3,8 @@
 
 #define PREFIX ":IRC "
 #define POSTFIX "\r\n" 
+#include <sstream>
+#include <string>
 
 //Errors :
 
@@ -50,8 +52,6 @@
 #define RPL_PONG(server_name, token) "PONG " + server_name + token + POSTFIX
 #define RPL_KICK(sender, target, channel)":" + sender + " KICK " + target + " " + channel + POSTFIX
 #define RPL_BROADTOPIC(source_nick, channel, topic)( ":" + source_nick + " TOPIC " + channel + " :" + topic + POSTFIX)
-#include <sstream>
-#include <string>
 
 template <typename T>
 std::string to_string(const T& value) {
