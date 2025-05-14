@@ -612,8 +612,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		{
 			topic_command(args[0], trailing, user);
 		}
-		// else
-		// 	topic_command(args[0], args[1], user);
+		else
+			topic_command(args[0], args[1], user);
 		
 	}
 
@@ -723,46 +723,111 @@ void Parser::privmsg(std::string receiver, std::string msg, User &user)
 	}
 }
 
-void Parser::topic_command(std::string channel_name, std::string new_topic, User& user) {
-	if (channel_name.empty())
-		return;	
-	std::map<std::string, Channel>::iterator it = channels.find(channel_name);
-	if (it != channels.end()) {
-		Channel &channel = it->second;
-		const std::vector<User*> &channel_users = channel.get_users();
-		bool user_in_channel = false;
-		for (size_t i = 0; i < channel_users.size(); i++) {
-			if (channel_users[i]->get_nick_name() == user.get_nick_name()) {
-				user_in_channel = true;
-				break;
-			}
-		}	
-		if (!user_in_channel) {
-			user.send_reply(ERR_NOTONCHANNEL(user.get_nick_name(), channel_name));
-		} else {
-			if (!new_topic.empty()) {
-				if (channel.has_mode('t') && !channel.is_operator(&user)) {
-					user.send_reply(ERR_CHANOPRIVSNEEDED(channel_name));
-					return;
-				}
-				else{
-					if (new_topic == ":"){
-						channel.set_topic("", user.get_nick_name());
-						user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, channel.get_topic()));
-					}
-					else{
-						channel.set_topic(new_topic.substr(1), user.get_nick_name());
-						for (size_t i = 0; i < channel_users.size(); i++) {
-							user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, channel.get_topic()));
-						}
-					}
-				}
-			}
-		}
-	} else {
-		user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
-	}
+
+void Parser::send_topic_update(User& user, Channel& channel, std::string& channel_name) {
+	std::string topic_message = RPL_BROADTOPIC(user.get_nick_name(), channel_name, channel.get_topic());
+    const std::vector<User*>& channel_users = channel.get_users();
+    for (size_t i = 0; i < channel_users.size(); i++) {
+            channel_users[i]->send_reply(topic_message);
+    }
 }
+
+void Parser::topic_command(std::string channel_name, std::string new_topic, User& user) {
+    if (channel_name.empty())
+        return;
+
+    std::map<std::string, Channel>::iterator it = channels.find(channel_name);
+    if (it != channels.end()) {
+        Channel& channel = it->second;
+        std::vector<User*>& channel_users = channel.get_users();
+        bool user_in_channel = false;
+
+        for (size_t i = 0; i < channel_users.size(); i++) {
+            if (channel_users[i]->get_nick_name() == user.get_nick_name()) {
+                user_in_channel = true;
+                break;
+            }
+        }
+        if (!user_in_channel) {
+            user.send_reply(ERR_NOTONCHANNEL(user.get_nick_name(), channel_name));
+        } else {
+            if (!new_topic.empty()) {
+                if (channel.has_mode('t') && !channel.is_operator(&user)) {
+                    user.send_reply(ERR_CHANOPRIVSNEEDED(channel_name));
+                    return;
+                }
+                if (new_topic == ":") {
+                    channel.set_topic("", user.get_nick_name());
+                } else {
+                    channel.set_topic(new_topic.substr(1), user.get_nick_name());
+                }
+                user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, channel.get_topic()));
+                user.send_reply(RPL_TOPICWHOTIME(user.get_nick_name(), channel_name, channel.get_topic_author(), channel.get_topic_time()));
+                send_topic_update(user, channel, channel_name);
+            }
+        }
+    } else {
+        user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+    }
+}
+
+
+
+// void Parser::topic_command(std::string channel_name, std::string new_topic, User& user) {
+// 	if (channel_name.empty())
+// 		return;	
+// 	std::map<std::string, Channel>::iterator it = channels.find(channel_name);
+// 	if (it != channels.end()) {
+// 		Channel &channel = it->second;
+// 		const std::vector<User*> &channel_users = channel.get_users();
+// 		bool user_in_channel = false;
+// 		for (size_t i = 0; i < channel_users.size(); i++) {
+// 			if (channel_users[i]->get_nick_name() == user.get_nick_name()) {
+// 				user_in_channel = true;
+// 				break;
+// 			}
+// 		}	
+// 		if (!user_in_channel) {
+// 			user.send_reply(ERR_NOTONCHANNEL(user.get_nick_name(), channel_name));
+// 		} else {
+// 			if (!new_topic.empty()) {
+// 				if (channel.has_mode('t') && !channel.is_operator(&user)) {
+// 					user.send_reply(ERR_CHANOPRIVSNEEDED(channel_name));
+// 					return;
+// 				}
+// 				else{
+// 					if (new_topic == ":"){
+// 						channel.set_topic("", user.get_nick_name());
+// 						user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, channel.get_topic()));
+// 						user.send_reply(RPL_TOPICWHOTIME(user.get_nick_name(), channel_name, channel.get_topic_author(), channel.get_topic_time()));
+// 						std::string topic_message = ":" + user.get_nick_name() + " TOPIC " + channel_name + " :" + channel.get_topic();
+// 						for (size_t i = 0; i < channel_users.size(); i++) {
+// 							if (channel_users[i]->get_nick_name() != user.get_nick_name()) {
+// 								channel_users[i]->send_reply(topic_message);
+// 								// send(channel_users[i]->get_fd(), topic_message.c_str(), topic_message.size(), 0);
+// 							}
+// 						}
+// 					}
+// 					else{
+// 						channel.set_topic(new_topic.substr(1), user.get_nick_name());
+// 						user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, channel.get_topic()));
+// 						user.send_reply(RPL_TOPICWHOTIME(user.get_nick_name(), channel_name, channel.get_topic_author(), channel.get_topic_time()));
+// 						std::string topic_message = ":" + user.get_nick_name() + " TOPIC " + channel_name + " :" + channel.get_topic();
+// 						for (size_t i = 0; i < channel_users.size(); i++) {
+// 							if (channel_users[i]->get_nick_name() != user.get_nick_name()) {
+// 								channel_users[i]->send_reply(topic_message);
+// 								// send(channel_users[i]->get_fd(), topic_message.c_str(), topic_message.size(), 0);
+// 							}
+// 						}
+// 					}
+// 				}
+// 			}
+// 		}
+// 	} else {
+// 		user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+// 	}
+// }
+
 
 User*    Parser::find_user_by_nickname(Channel &channel,const std::string nickname)
 {
