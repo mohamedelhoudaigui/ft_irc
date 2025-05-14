@@ -200,3 +200,10 @@ void		User::set_pass_step(bool a)
 {
     this->pass_step = a;
 }
+
+std::string User::get_displayed_nick(Channel &channel, User *user){
+    if (channel.is_operator(user))
+        return "@" + user->get_nick_name();
+    else
+        return user->get_nick_name();
+}

@@ -693,7 +693,7 @@ void Parser::privmsg(std::string receiver, std::string msg, User &user)
 			if (sender)
 			{
 				const std::vector<User *> &channel_users = channel.get_users();
-				std::string formatted_msg = ":" + user.get_nick_name() + "!" + user.get_user_name() + user.get_ip_address() + " PRIVMSG " + receiver + " :" + msg + "\r\n";
+				std::string formatted_msg = ":" + user.get_displayed_nick(channel, &user) + "!" + user.get_user_name() + user.get_ip_address() + " PRIVMSG " + receiver + " :" + msg + "\r\n";
 				for (size_t i = 0; i < channel_users.size(); ++i)
 				{
 					User *target = channel_users[i];
@@ -702,7 +702,7 @@ void Parser::privmsg(std::string receiver, std::string msg, User &user)
 				}
 			}
 			else
-				user.send_reply(ERR_NOTONCHANNEL(user.get_nick_name(), channel.get_name()));
+				user.send_reply(ERR_NOTONCHANNEL(user.get_displayed_nick(channel, &user), channel.get_name()));
 		}
 		else
 			user.send_reply(ERR_NOSUCHCHANNEL(receiver));
@@ -727,7 +727,7 @@ void Parser::privmsg(std::string receiver, std::string msg, User &user)
 
 
 void Parser::send_topic_update(User& user, Channel& channel, std::string& channel_name) {
-	std::string topic_message = RPL_BROADTOPIC(user.get_nick_name(), channel_name, channel.get_topic());
+	std::string topic_message = RPL_BROADTOPIC(user.get_displayed_nick(channel, &user), channel_name, channel.get_topic());
     const std::vector<User*>& channel_users = channel.get_users();
     for (size_t i = 0; i < channel_users.size(); i++) {
             channel_users[i]->send_reply(topic_message);
@@ -745,13 +745,13 @@ void Parser::topic_command(std::string channel_name, std::string new_topic, User
         bool user_in_channel = false;
 
         for (size_t i = 0; i < channel_users.size(); i++) {
-            if (channel_users[i]->get_nick_name() == user.get_nick_name()) {
+            if (channel_users[i]->get_displayed_nick(channel, &user) == user.get_displayed_nick(channel, &user)) {
                 user_in_channel = true;
                 break;
             }
         }
         if (!user_in_channel) {
-            user.send_reply(ERR_NOTONCHANNEL(user.get_nick_name(), channel_name));
+            user.send_reply(ERR_NOTONCHANNEL(user.get_displayed_nick(channel, &user), channel_name));
         } else {
             if (!new_topic.empty()) {
                 if (channel.has_mode('t') && !channel.is_operator(&user)) {
@@ -759,19 +759,21 @@ void Parser::topic_command(std::string channel_name, std::string new_topic, User
                     return;
                 }
                 if (new_topic == ":") {
-                    channel.set_topic("", user.get_nick_name());
+                    channel.set_topic("", user.get_displayed_nick(channel, &user));
                 } else if (istrail) {
-                    channel.set_topic(new_topic.substr(1), user.get_nick_name());
+                    channel.set_topic(new_topic.substr(1), user.get_displayed_nick(channel, &user));
                 } else {
-					channel.set_topic(new_topic, user.get_nick_name()); 
+					channel.set_topic(new_topic, user.get_displayed_nick(channel, &user)); 
 				}
-                user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, channel.get_topic()));
-                user.send_reply(RPL_TOPICWHOTIME(user.get_nick_name(), channel_name, channel.get_topic_author(), channel.get_topic_time()));
+                user.send_reply(RPL_TOPIC(user.get_displayed_nick(channel, &user), channel_name, channel.get_topic()));
+                user.send_reply(RPL_TOPICWHOTIME(user.get_displayed_nick(channel, &user), channel_name, channel.get_topic_author(), channel.get_topic_time()));
                 send_topic_update(user, channel, channel_name);
             }
         }
-    } else {
+    }
+	else {
         user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
+		return ;
     }
 }
 

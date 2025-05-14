@@ -152,7 +152,6 @@ void Channel::set_operators_mode(bool add, User *user) {
 }
 
 
-
 void Channel::remove_operator(User *user)
 {
     operators.erase(std::remove(operators.begin(), operators.end(), user), operators.end());
