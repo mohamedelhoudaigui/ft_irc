@@ -1,10 +1,10 @@
 #ifndef REPLYS_HPP
 #define REPLYS_HPP
 
+#include "utils.hpp"
+
 #define PREFIX ":IRC "
-#define POSTFIX "\r\n" 
-#include <sstream>
-#include <string>
+#define POSTFIX "\r\n"
 
 //Errors :
 
@@ -52,15 +52,6 @@
 #define RPL_PONG(server_name, token) "PONG " + server_name + token + POSTFIX
 #define RPL_KICK(sender, target, channel)":" + sender + " KICK " + target + " " + channel + POSTFIX
 #define RPL_BROADTOPIC(source_nick, channel, topic)( ":" + source_nick + " TOPIC " + channel + " :" + topic + POSTFIX)
-
-template <typename T>
-std::string to_string(const T& value) {
-    std::ostringstream oss;
-    oss << value;
-    return oss.str();
-}
-
-
 #define RPL_TOPICWHOTIME(nick, channel, setter, time) PREFIX "333 " + std::string(nick) + " " + std::string(channel) + " " + std::string(setter) + " " + to_string(time) + POSTFIX
 
 #endif

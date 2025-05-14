@@ -58,12 +58,11 @@ class Parser
             bool			check_nick_name(std::string nick);
 
             void	        process_auth(User & user);
-            //ADDED BY CAZIANE
             void            privmsg(std::string receiver, std::string msg, User &user);
             void            topic(User &user, std::string channel_name, std::string new_topic, Channel &channel);
             void            send_topic_update(User& user, Channel& channel, std::string& channel_name);
             void            handleModeCommand(User* user, std::vector<std::string>& args);
-            void	        topic_command(std::string channel_name, std::string new_topic, User& user);
+            void	        topic_command(std::string channel_name, std::string new_topic, User& user, bool istrail);
 
 
             User*           find_user_by_nickname(Channel &channel,const std::string nickname);

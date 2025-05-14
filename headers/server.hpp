@@ -43,7 +43,7 @@ class Server
 
 	private:
 
-		// epoll data:
+		// poll data:
 		int							server_fd;
 		struct sockaddr_in			addr;
 		std::vector<struct pollfd>	fds;

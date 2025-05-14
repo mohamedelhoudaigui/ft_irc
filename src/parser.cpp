@@ -404,6 +404,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		{
 			privmsg(args[0], trailing, user);
 		}
+		else if (args.size() < 2)
+			user.send_reply(ERR_NOTEXTTOSEND());
 		else
 			privmsg(args[0], args[1], user);
 		
@@ -609,11 +611,11 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		if (args.size() < 1)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("TOPIC")));
 		else if (!trailing.empty())
-		{
-			topic_command(args[0], trailing, user);
-		}
+			topic_command(args[0], trailing, user, true);
+		else if (args.size() < 2)
+			user.send_reply(ERR_NEEDMOREPARAMS(std::string("TOPIC")));
 		else
-			topic_command(args[0], args[1], user);
+			topic_command(args[0], args[1], user, false);
 		
 	}
 
@@ -638,7 +640,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			if (it != channels.end()) {
 				Channel &channel = it->second;
 				const std::vector<User *> &channel_users = channel.get_users();
-				std::string roll_message = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@localhost PRIVMSG " + channel_name + " :rolled a " + int_to_string(die1) + " and a " + int_to_string(die2) + "\r\n";
+				std::string roll_message = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@localhost PRIVMSG " + channel_name + " :rolled a " + to_string(die1) + " and a " + to_string(die2) + "\r\n";
 				for (size_t i = 0; i < channel_users.size(); ++i) {
 					send(channel_users[i]->get_fd(), roll_message.c_str(), roll_message.size(), 0);
 				}
@@ -646,7 +648,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 				user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
 			}
 		} else {
-			std::string roll_message = "Rolled a " + int_to_string(die1) + " and a " + int_to_string(die2) + "\r\n";
+			std::string roll_message = "Rolled a " + to_string(die1) + " and a " + to_string(die2) + "\r\n";
 			send(user.get_fd(), roll_message.c_str(), roll_message.size(), 0);
 		}
 	}
@@ -732,7 +734,7 @@ void Parser::send_topic_update(User& user, Channel& channel, std::string& channe
     }
 }
 
-void Parser::topic_command(std::string channel_name, std::string new_topic, User& user) {
+void Parser::topic_command(std::string channel_name, std::string new_topic, User& user, bool istrail) {
     if (channel_name.empty())
         return;
 
@@ -758,9 +760,11 @@ void Parser::topic_command(std::string channel_name, std::string new_topic, User
                 }
                 if (new_topic == ":") {
                     channel.set_topic("", user.get_nick_name());
-                } else {
+                } else if (istrail) {
                     channel.set_topic(new_topic.substr(1), user.get_nick_name());
-                }
+                } else {
+					channel.set_topic(new_topic, user.get_nick_name()); 
+				}
                 user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, channel.get_topic()));
                 user.send_reply(RPL_TOPICWHOTIME(user.get_nick_name(), channel_name, channel.get_topic_author(), channel.get_topic_time()));
                 send_topic_update(user, channel, channel_name);
@@ -770,64 +774,6 @@ void Parser::topic_command(std::string channel_name, std::string new_topic, User
         user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
     }
 }
-
-
-
-// void Parser::topic_command(std::string channel_name, std::string new_topic, User& user) {
-// 	if (channel_name.empty())
-// 		return;	
-// 	std::map<std::string, Channel>::iterator it = channels.find(channel_name);
-// 	if (it != channels.end()) {
-// 		Channel &channel = it->second;
-// 		const std::vector<User*> &channel_users = channel.get_users();
-// 		bool user_in_channel = false;
-// 		for (size_t i = 0; i < channel_users.size(); i++) {
-// 			if (channel_users[i]->get_nick_name() == user.get_nick_name()) {
-// 				user_in_channel = true;
-// 				break;
-// 			}
-// 		}	
-// 		if (!user_in_channel) {
-// 			user.send_reply(ERR_NOTONCHANNEL(user.get_nick_name(), channel_name));
-// 		} else {
-// 			if (!new_topic.empty()) {
-// 				if (channel.has_mode('t') && !channel.is_operator(&user)) {
-// 					user.send_reply(ERR_CHANOPRIVSNEEDED(channel_name));
-// 					return;
-// 				}
-// 				else{
-// 					if (new_topic == ":"){
-// 						channel.set_topic("", user.get_nick_name());
-// 						user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, channel.get_topic()));
-// 						user.send_reply(RPL_TOPICWHOTIME(user.get_nick_name(), channel_name, channel.get_topic_author(), channel.get_topic_time()));
-// 						std::string topic_message = ":" + user.get_nick_name() + " TOPIC " + channel_name + " :" + channel.get_topic();
-// 						for (size_t i = 0; i < channel_users.size(); i++) {
-// 							if (channel_users[i]->get_nick_name() != user.get_nick_name()) {
-// 								channel_users[i]->send_reply(topic_message);
-// 								// send(channel_users[i]->get_fd(), topic_message.c_str(), topic_message.size(), 0);
-// 							}
-// 						}
-// 					}
-// 					else{
-// 						channel.set_topic(new_topic.substr(1), user.get_nick_name());
-// 						user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, channel.get_topic()));
-// 						user.send_reply(RPL_TOPICWHOTIME(user.get_nick_name(), channel_name, channel.get_topic_author(), channel.get_topic_time()));
-// 						std::string topic_message = ":" + user.get_nick_name() + " TOPIC " + channel_name + " :" + channel.get_topic();
-// 						for (size_t i = 0; i < channel_users.size(); i++) {
-// 							if (channel_users[i]->get_nick_name() != user.get_nick_name()) {
-// 								channel_users[i]->send_reply(topic_message);
-// 								// send(channel_users[i]->get_fd(), topic_message.c_str(), topic_message.size(), 0);
-// 							}
-// 						}
-// 					}
-// 				}
-// 			}
-// 		}
-// 	} else {
-// 		user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
-// 	}
-// }
-
 
 User*    Parser::find_user_by_nickname(Channel &channel,const std::string nickname)
 {
