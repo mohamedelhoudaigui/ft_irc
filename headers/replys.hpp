@@ -35,7 +35,6 @@
 #define RPL_WELCOME(sender, msg) PREFIX "001 " + sender + " : " + msg + POSTFIX
 #define RPL_YOURHOST(nick) PREFIX "002 " + nick + " :Your host is FT_IRC running version 1.0" + POSTFIX
 #define RPL_CREATED(nick, datetime) PREFIX "003 " + nick + " :This server was created " + datetime + POSTFIX
-
 #define RPL_NAMREPLY(sender, channel, users)    PREFIX "353 " + sender + " = " + channel + " :" + users + POSTFIX
 #define RPL_ENDOFNAMES(sender, channel)        PREFIX "366 " + sender + " " + channel + " :End of /NAMES list." POSTFIX
 #define RPL_TOPIC(sender, channel, topic)PREFIX " 332 " + sender + " " + channel + " :" + topic + POSTFIX    

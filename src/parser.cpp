@@ -501,7 +501,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 
 					std::string names_list;
 					for (size_t j = 0; j < current_users.size(); j++) {
-						if (j > 0) names_list += " ";
+						if (j > 0)
+							names_list += " ";
 						if (existing_channel->is_operator(current_users[j]))
 							names_list += "@";
 						names_list += current_users[j]->get_nick_name() + "!" + current_users[j]->get_user_name() + "@" + current_users[j]->get_ip_address();
