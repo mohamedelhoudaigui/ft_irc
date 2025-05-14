@@ -58,6 +58,10 @@ void    Channel::set_topic(const std::string &name, const std::string &author){
     this->topic_time_change = time(NULL);
 }
 
+void    Channel::set_name(const std::string &name) {
+    this->name = name;
+}
+
 std::string Channel::get_topic() const{
     return this->topic;
 }

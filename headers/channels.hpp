@@ -53,6 +53,7 @@ class Channel{
         bool get_channel_status(void) const;
 
         bool has_mode(char mode);
+        void set_name(const std::string &name);
         void set_mode(char mode, bool add);
         void set_key_mode(std::string key, bool add);
         void set_user_limits(bool add, unsigned long limit);

@@ -481,6 +481,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 					Channel new_channel;
 					channels[channel_name] = new_channel;
 					Channel &channel_ref = channels[channel_name];
+					channel_ref.set_name(channel_name.substr(1));
 					channel_ref.add_user(&user);
 					channel_ref.set_operators_mode(true, &user);
 				}
