@@ -737,8 +737,7 @@ void Parser::topic_command(std::string channel_name, std::string new_topic, User
 				user_in_channel = true;
 				break;
 			}
-		}
-		
+		}	
 		if (!user_in_channel) {
 			user.send_reply(ERR_NOTONCHANNEL(user.get_nick_name(), channel_name));
 		} else {
@@ -754,8 +753,7 @@ void Parser::topic_command(std::string channel_name, std::string new_topic, User
 					send(channel_users[i]->get_fd(), formatted_msg.c_str(), formatted_msg.size(), 0);
 				}
 				return;
-			}
-			
+			}			
 			if (channel.get_topic().empty()) {
 				user.send_reply(RPL_NOTOPIC(user.get_nick_name(), channel_name));
 			}
