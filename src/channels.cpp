@@ -53,7 +53,7 @@ std::vector<User *>& Channel::get_users() {
 }
 
 void    Channel::set_topic(const std::string &name, const std::string &author){
-    this->name = name;
+    this->topic = name;
     this->topic_author = author;
     this->topic_time_change = time(NULL);
 }

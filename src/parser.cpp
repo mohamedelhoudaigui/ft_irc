@@ -758,7 +758,8 @@ void Parser::topic_command(std::string channel_name, std::string new_topic, User
 			
 			if (channel.get_topic().empty()) {
 				user.send_reply(RPL_NOTOPIC(user.get_nick_name(), channel_name));
-			} else {
+			}
+			else {
 				user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, channel.get_topic()));
 			}
 		}
