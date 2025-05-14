@@ -589,7 +589,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 						const std::vector<User *> &channel_users = channel.get_users();
 						for (size_t i = 0; i < channel_users.size(); ++i) {
 							send(channel_users[i]->get_fd(), kick_message.c_str(), kick_message.size(), 0);
-						}
+						}else
+						// 	topic_command(args[0], args[1], user);
 						channel.remove_user(selected_user);
 						std::cout << "User " << kicked << " removed from channel " << channel_name << std::endl;
 					}
@@ -612,8 +613,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		{
 			topic_command(args[0], trailing, user);
 		}
-		else
-			topic_command(args[0], args[1], user);
+		// else
+		// 	topic_command(args[0], args[1], user);
 		
 	}
 
@@ -725,8 +726,7 @@ void Parser::privmsg(std::string receiver, std::string msg, User &user)
 
 void Parser::topic_command(std::string channel_name, std::string new_topic, User& user) {
 	if (channel_name.empty())
-		return;
-	
+		return;	
 	std::map<std::string, Channel>::iterator it = channels.find(channel_name);
 	if (it != channels.end()) {
 		Channel &channel = it->second;
@@ -741,24 +741,23 @@ void Parser::topic_command(std::string channel_name, std::string new_topic, User
 		if (!user_in_channel) {
 			user.send_reply(ERR_NOTONCHANNEL(user.get_nick_name(), channel_name));
 		} else {
-			if (!new_topic.empty() || new_topic == "") {
+			if (!new_topic.empty()) {
 				if (channel.has_mode('t') && !channel.is_operator(&user)) {
 					user.send_reply(ERR_CHANOPRIVSNEEDED(channel_name));
 					return;
 				}
-				
-				channel.set_topic(new_topic, user.get_nick_name());
-				for (size_t i = 0; i < channel_users.size(); i++) {
-					std::string formatted_msg = ":" + user.get_nick_name() + " TOPIC " + channel_name + " :" + new_topic;
-					send(channel_users[i]->get_fd(), formatted_msg.c_str(), formatted_msg.size(), 0);
+				else{
+					if (new_topic == ":"){
+						channel.set_topic("", user.get_nick_name());
+						user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, channel.get_topic()));
+					}
+					else{
+						channel.set_topic(new_topic.substr(1), user.get_nick_name());
+						for (size_t i = 0; i < channel_users.size(); i++) {
+							user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, channel.get_topic()));
+						}
+					}
 				}
-				return;
-			}			
-			if (channel.get_topic().empty()) {
-				user.send_reply(RPL_NOTOPIC(user.get_nick_name(), channel_name));
-			}
-			else {
-				user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, channel.get_topic()));
 			}
 		}
 	} else {
