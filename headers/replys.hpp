@@ -51,7 +51,7 @@
 #define RPL_UMODEIS(nickname, modes) PREFIX "221 " + nickname + " :" + modes + POSTFIX
 #define RPL_PONG(server_name, token) "PONG " + server_name + token + POSTFIX
 #define RPL_KICK(sender, target, channel)":" + sender + " KICK " + target + " " + channel + POSTFIX
-#define RPL_BROADTOPIC(source_nick, channel, topic)( ":" + source_nick + " TOPIC " + channel + " :" + topic + POSTFIX)
+#define RPL_BROADTOPIC(nickname, channel, topic)( ":" + nickname + " TOPIC " + channel + " :" + topic + POSTFIX)
 #define RPL_TOPICWHOTIME(nick, channel, setter, time) PREFIX "333 " + std::string(nick) + " " + std::string(channel) + " " + std::string(setter) + " " + to_string(time) + POSTFIX
 
 #endif

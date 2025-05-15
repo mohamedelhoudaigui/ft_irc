@@ -502,12 +502,16 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 					}
 
 					std::string names_list;
+					// std::string full_nick = "";
 					for (size_t j = 0; j < current_users.size(); j++) {
 						if (j > 0)
 							names_list += " ";
 						if (existing_channel->is_operator(current_users[j]))
 							names_list += "@";
 						names_list += current_users[j]->get_nick_name() + "!" + current_users[j]->get_user_name() + "@" + current_users[j]->get_ip_address();
+						// 	full_nick += "@";
+						// full_nick += current_users[j]->get_nick_name();
+						// names_list += full_nick;
 					}
 					user.send_reply(RPL_NAMREPLY(user.get_nick_name(), channel_name, names_list));
 					user.send_reply(RPL_ENDOFNAMES(user.get_nick_name(), channel_name));
@@ -843,6 +847,17 @@ void Channel::apply_modes(const std::string &mode_string, const std::vector<std:
 			User *target = parser.find_user_by_nickname(*this, params[param_index]);
 			if (target)
 				set_operators_mode(adding, target);
+			// const std::vector<User *> &users = get_users();
+			// std::string names_list;
+			// for (size_t j = 0; j < users.size(); ++j) {
+			// 	if (j > 0)
+			// 		names_list += " ";
+			// 	names_list += users[j]->get_displayed_nick(*this, users[j]);
+			// }
+			// for (size_t j = 0; j < users.size(); ++j) {
+			// 	users[j]->send_reply(RPL_NAMREPLY(users[j]->get_nick_name(), "#" + get_name(), names_list));
+			// 	users[j]->send_reply(RPL_ENDOFNAMES(users[j]->get_nick_name(), "#" + get_name()));
+			// }
 			param_index++;
 		}
 		else if (c == 'l')
