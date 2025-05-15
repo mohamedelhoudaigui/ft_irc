@@ -616,8 +616,6 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("TOPIC")));
 		else if (!trailing.empty())
 			topic_command(args[0], trailing, user, true);
-		else if (args.size() < 2)
-			user.send_reply(ERR_NEEDMOREPARAMS(std::string("TOPIC")));
 		else
 			topic_command(args[0], args[1], user, false);
 		
@@ -697,10 +695,10 @@ void Parser::privmsg(std::string receiver, std::string msg, User &user)
 			if (sender)
 			{
 				const std::vector<User *> &channel_users = channel.get_users();
+				std::string formatted_msg = ":" + user.get_displayed_nick(channel, &user) + "!" + user.get_user_name() + user.get_ip_address() + " PRIVMSG " + receiver + " :" + msg + "\r\n";
 				for (size_t i = 0; i < channel_users.size(); ++i)
 				{
 					User *target = channel_users[i];
-					std::string formatted_msg = ":" + user.get_displayed_nick(channel, &user) + "!" + user.get_user_name() + user.get_ip_address() + " PRIVMSG " + receiver + " :" + msg + "\r\n";
 					if (target->get_fd() != user.get_fd())
 						send(target->get_fd(), formatted_msg.c_str(), formatted_msg.size(), 0);
 				}
@@ -773,6 +771,13 @@ void Parser::topic_command(std::string channel_name, std::string new_topic, User
                 user.send_reply(RPL_TOPICWHOTIME(user.get_displayed_nick(channel, &user), channel_name, channel.get_topic_author(), channel.get_topic_time()));
                 send_topic_update(user, channel, channel_name);
             }
+			else
+			{
+				if ((channel.get_topic().empty()))
+					user.send_reply(RPL_NOTOPIC(user.get_displayed_nick(channel, &user), channel_name));
+				else
+					user.send_reply(RPL_TOPIC(user.get_displayed_nick(channel, &user), channel_name, channel.get_topic()));
+			}
         }
     }
 	else {
