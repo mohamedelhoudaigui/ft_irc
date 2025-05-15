@@ -697,10 +697,10 @@ void Parser::privmsg(std::string receiver, std::string msg, User &user)
 			if (sender)
 			{
 				const std::vector<User *> &channel_users = channel.get_users();
-				std::string formatted_msg = ":" + user.get_displayed_nick(channel, &user) + "!" + user.get_user_name() + user.get_ip_address() + " PRIVMSG " + receiver + " :" + msg + "\r\n";
 				for (size_t i = 0; i < channel_users.size(); ++i)
 				{
 					User *target = channel_users[i];
+					std::string formatted_msg = ":" + user.get_displayed_nick(channel, &user) + "!" + user.get_user_name() + user.get_ip_address() + " PRIVMSG " + receiver + " :" + msg + "\r\n";
 					if (target->get_fd() != user.get_fd())
 						send(target->get_fd(), formatted_msg.c_str(), formatted_msg.size(), 0);
 				}
@@ -847,17 +847,17 @@ void Channel::apply_modes(const std::string &mode_string, const std::vector<std:
 			User *target = parser.find_user_by_nickname(*this, params[param_index]);
 			if (target)
 				set_operators_mode(adding, target);
-			// const std::vector<User *> &users = get_users();
-			// std::string names_list;
-			// for (size_t j = 0; j < users.size(); ++j) {
-			// 	if (j > 0)
-			// 		names_list += " ";
-			// 	names_list += users[j]->get_displayed_nick(*this, users[j]);
-			// }
-			// for (size_t j = 0; j < users.size(); ++j) {
-			// 	users[j]->send_reply(RPL_NAMREPLY(users[j]->get_nick_name(), "#" + get_name(), names_list));
-			// 	users[j]->send_reply(RPL_ENDOFNAMES(users[j]->get_nick_name(), "#" + get_name()));
-			// }
+			const std::vector<User *> &users = get_users();
+			std::string names_list;
+			for (size_t j = 0; j < users.size(); ++j) {
+				if (j > 0)
+					names_list += " ";
+				names_list += users[j]->get_displayed_nick(*this, users[j]);
+			}
+			for (size_t j = 0; j < users.size(); ++j) {
+				users[j]->send_reply(RPL_NAMREPLY(users[j]->get_nick_name(), "#" + get_name(), names_list));
+				users[j]->send_reply(RPL_ENDOFNAMES(users[j]->get_nick_name(), "#" + get_name()));
+			}
 			param_index++;
 		}
 		else if (c == 'l')
