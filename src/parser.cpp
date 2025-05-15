@@ -754,7 +754,8 @@ void Parser::topic_command(std::string channel_name, std::string new_topic, User
         }
         if (!user_in_channel) {
             user.send_reply(ERR_NOTONCHANNEL(user.get_displayed_nick(channel, &user), channel_name));
-        } else {
+        }
+		else {
             if (!new_topic.empty()) {
                 if (channel.has_mode('t') && !channel.is_operator(&user)) {
                     user.send_reply(ERR_CHANOPRIVSNEEDED(channel_name));
