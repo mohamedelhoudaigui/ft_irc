@@ -45,7 +45,7 @@
 #define RPL_NOTOPIC(sender, channel)PREFIX " 331 " + sender + " " + channel + " :No topic is set" + POSTFIX
 #define RPL_INVITING(nickname, targnick, targchan)  ": 341 " + nickname + " " + targnick + " " + targchan + POSTFIX
 #define RPL_INVITE(sender, target, channel)":" + sender + " INVITE " + target + " " + channel + POSTFIX
-#define RPL_JOINMSG(nickname, username, channel)(":" + nickname + "!" + username + "@localhost JOIN " + channel + POSTFIX)
+#define RPL_JOINMSG(nickname, username, channel)(":" + nickname + "!" + username + "@FT_IRC JOIN " + channel + POSTFIX)
 #define RPL_JOIN(sender, channel)":" + sender + " JOIN :" + channel + POSTFIX
 #define RPL_CHANNELMODEIS(hostname, channel, mode)(":" + hostname + " MODE " + channel + " " + mode + POSTFIX)
 #define RPL_UMODEIS(nickname, modes) PREFIX "221 " + nickname + " :" + modes + POSTFIX
@@ -53,5 +53,6 @@
 #define RPL_KICK(sender, target, channel)":" + sender + " KICK " + target + " " + channel + POSTFIX
 #define RPL_BROADTOPIC(nickname, channel, topic)( ":" + nickname + " TOPIC " + channel + " :" + topic + POSTFIX)
 #define RPL_TOPICWHOTIME(nick, channel, setter, time) PREFIX "333 " + std::string(nick) + " " + std::string(channel) + " " + std::string(setter) + " " + to_string(time) + POSTFIX
+#define RPL_NICKCHANGE(old_nick, user_name, new_nick) ":" + old_nick + "!" + user_name + "@FT_IRC NICK :" + new_nick + POSTFIX
 
 #endif

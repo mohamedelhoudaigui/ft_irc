@@ -164,3 +164,13 @@ std::string Channel::get_topic_author() const{
 time_t Channel::get_topic_time() const{
     return topic_time_change;
 }
+
+bool Channel::has_user(User* user)
+{
+    for (size_t i = 0; i < users.size(); ++i)
+    {
+        if (users[i] == user)
+            return (true);
+    }
+    return (false);
+}

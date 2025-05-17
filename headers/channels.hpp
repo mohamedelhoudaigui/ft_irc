@@ -60,5 +60,8 @@ class Channel{
         void set_operators_mode(bool add, User *user);
         void remove_operator(User *user);
         void apply_modes(const std::string &mode_string, const std::vector<std::string> &params, Parser &parser, User *user, Channel &channel);
+
+        // added by mel-houd:
+        bool    has_user(User* user); // checks if a user pointer exists in the channel
 };
 

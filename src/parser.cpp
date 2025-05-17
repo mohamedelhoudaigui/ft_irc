@@ -71,17 +71,23 @@ void    Parser::add_user(int fd)
 	}
 }
 
-void	Parser::broadcast(User& user, std::string msg)
+void Parser::broadcast(User& user, std::string msg)
 {
-	std::map<std::string, Channel>::iterator it;
-	for (it = channels.begin(); it != channels.end(); ++it)
-	{
-		User *u = find_user_by_nickname(it->second, user.get_nick_name());
-		if (u)
-		{
-			privmsg("#" + it->second.get_name(), msg, user);
-		}
-	}
+    std::map<std::string, Channel>::iterator it;
+    for (it = channels.begin(); it != channels.end(); ++it)
+    {
+        if (it->second.has_user(&user))
+        {
+            const std::vector<User*>& channel_users = it->second.get_users();
+            for (size_t i = 0; i < channel_users.size(); ++i)
+            {
+                if (channel_users[i]->get_fd() != user.get_fd())
+                {
+                    channel_users[i]->send_reply(msg);
+                }
+            }
+        }
+    }
 }
 
 void    Parser::remove_user(int fd)
@@ -327,8 +333,12 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			user.set_nick_name(args[0]);
 			if (!user.get_auth())
 				user.set_nick_step(true);
+	
+			// this makes the client now the change
 			user.send_reply(RPL_NICK(old_nick, user.get_nick_name()));
-			broadcast(user, RPL_NICK(old_nick, user.get_nick_name()));
+
+			// this is to inform other users:
+       		broadcast(user, RPL_NICKCHANGE(old_nick, user.get_user_name(), user.get_nick_name()));
 
 			process_auth(user);
 		}
@@ -371,7 +381,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			user.send_reply(ERR_NEEDMOREPARAMS(std::string("PING")));
 		else
 		{
-			std::string	server_name = "localhost";
+			std::string	server_name = "FT_IRC";
 			std::string	token = args[0];
 			user.send_reply(RPL_PONG(server_name, args[0]));
 		}
@@ -587,7 +597,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 					User *selected_user = find_user_by_nickname(it->second, kicked);
 					if (selected_user) {
 						std::string kick_message = ":" + user.get_nick_name() + "!" + user.get_user_name() 
-						+ "@localhost KICK " + channel_name + " " + kicked + " :" + reason + "\r\n";
+						+ "@FT_IRC KICK " + channel_name + " " + kicked + " :" + reason + "\r\n";
 						const std::vector<User *> &channel_users = channel.get_users();
 						for (size_t i = 0; i < channel_users.size(); ++i) {
 							send(channel_users[i]->get_fd(), kick_message.c_str(), kick_message.size(), 0);
@@ -638,7 +648,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			if (it != channels.end()) {
 				Channel &channel = it->second;
 				const std::vector<User *> &channel_users = channel.get_users();
-				std::string roll_message = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@localhost PRIVMSG " + channel_name + " :rolled a " + to_string(die1) + " and a " + to_string(die2) + "\r\n";
+				std::string roll_message = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@FT_IRC PRIVMSG " + channel_name + " :rolled a " + to_string(die1) + " and a " + to_string(die2) + "\r\n";
 				for (size_t i = 0; i < channel_users.size(); ++i) {
 					send(channel_users[i]->get_fd(), roll_message.c_str(), roll_message.size(), 0);
 				}
@@ -663,7 +673,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			if (it != channels.end()) {
 				Channel &channel = it->second;
 				const std::vector<User *> &channel_users = channel.get_users();
-				std::string flip_message = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@localhost PRIVMSG " + channel_name + " :" + result + "\r\n";
+				std::string flip_message = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@FT_IRC PRIVMSG " + channel_name + " :" + result + "\r\n";
 				for (size_t i = 0; i < channel_users.size(); ++i) {
 					send(channel_users[i]->get_fd(), flip_message.c_str(), flip_message.size(), 0);
 				}
