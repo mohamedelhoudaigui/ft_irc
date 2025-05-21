@@ -1,5 +1,4 @@
 #include "../headers/bot.hpp"
-#include <iostream>
 
 void print_usage(void) {
     std::cerr << "usage: " << "./ircbot <server_address> <port> <password>" << std::endl;
@@ -86,10 +85,10 @@ void Bot::handle_server_response() {
     }
 
     std::string response(buffer);
-    std::istringstream iss(response);
+    std::stringstream ss(response);
     std::string line;
 
-    while (std::getline(iss, line)) {
+    while (std::getline(ss, line)) {
         if (line.empty() || line == "\r") continue;
 
         if (line.find("PING") != std::string::npos) {
@@ -167,7 +166,7 @@ int main(int argc, char* argv[]) {
         Bot bot(server_address, port, password);
         bot.run();
     }
-    catch (const std::runtime_error& e) {
+    catch (const std::exception& e) {
         std::cerr << "Connection error: " << e.what() << std::endl;
         return 1;
     }

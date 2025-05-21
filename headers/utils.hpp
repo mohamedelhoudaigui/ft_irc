@@ -1,5 +1,4 @@
-#ifndef UTILS_HPP
-#define UTILS_HPP
+#pragma once
 
 #include <string>
 #include <algorithm>
@@ -23,5 +22,3 @@ std::string to_string(const T& value) {
     return ss.str();
 }
 
-
-#endif

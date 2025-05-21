@@ -1,5 +1,4 @@
-#ifndef USER_HPP
-#define USER_HPP
+#pragma once
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -77,6 +76,3 @@ class User
 			bool			purge;
 
 };
-
-
-#endif

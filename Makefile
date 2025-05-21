@@ -39,7 +39,7 @@ $(OBJ_DIR)/%.o: %.cpp $(HEADERS)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-bonus: $(BONUS_NAME)
+bonus: all $(BONUS_NAME)
 
 $(BONUS_NAME): $(BONUS_OBJS)
 	$(CC) $(CFLAGS) -o $(BONUS_NAME) $(BONUS_OBJS)

@@ -1,5 +1,4 @@
-#ifndef PARSER_HPP
-#define PARSER_HPP
+#pragma once
 
 #include <poll.h>
 #include <sstream>
@@ -48,7 +47,6 @@ class Parser
             bool            check_auth(User & user);
 
             void			process(struct pollfd event);
-            void			set_epoll_fd(int _epoll_fd);
             void    		process_buffer(User & user, char* buffer, ssize_t bytes_recv);
 
             void			add_user(int fd);
@@ -59,7 +57,6 @@ class Parser
 
             void	        process_auth(User & user);
             void            privmsg(std::string receiver, std::string msg, User &user);
-            void            topic(User &user, std::string channel_name, std::string new_topic, Channel &channel);
             void            send_topic_update(User& user, Channel& channel, std::string& channel_name);
             void            handleModeCommand(User* user, std::vector<std::string>& args);
             void	        topic_command(std::string channel_name, std::string new_topic, User& user, bool istrail);
@@ -79,5 +76,3 @@ class Parser
 };
 
 std::ostream& operator<<(std::ostream& os, const cmd_line& c);
-
-#endif

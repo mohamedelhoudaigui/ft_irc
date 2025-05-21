@@ -1,5 +1,4 @@
-#ifndef SERVER_HPP
-#define SERVER_HPP
+#pragma once
 
 #include <sys/socket.h>
 #include <poll.h>
@@ -53,5 +52,3 @@ class Server
 		Parser				parser;
 		std::string			creation_time;
 };
-
-#endif

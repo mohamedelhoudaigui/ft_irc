@@ -633,58 +633,6 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 			return ;
 		handleModeCommand(&user, args);
 	}
-
-	else if (cmd == "ROLL")
-	{
-		if (!check_auth(user))
-			return;
-		
-		int die1 = (rand() % 6) + 1;
-		int die2 = (rand() % 6) + 1;
-		
-		if (args.size() > 0) {
-			std::string channel_name = args[0];
-			std::map<std::string, Channel>::iterator it = channels.find(channel_name);
-			if (it != channels.end()) {
-				Channel &channel = it->second;
-				const std::vector<User *> &channel_users = channel.get_users();
-				std::string roll_message = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@FT_IRC PRIVMSG " + channel_name + " :rolled a " + to_string(die1) + " and a " + to_string(die2) + "\r\n";
-				for (size_t i = 0; i < channel_users.size(); ++i) {
-					send(channel_users[i]->get_fd(), roll_message.c_str(), roll_message.size(), 0);
-				}
-			} else {
-				user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
-			}
-		} else {
-			std::string roll_message = "Rolled a " + to_string(die1) + " and a " + to_string(die2) + "\r\n";
-			send(user.get_fd(), roll_message.c_str(), roll_message.size(), 0);
-		}
-	}
-	else if (cmd == "FLIP")
-	{
-		if (!check_auth(user))
-			return;
-		
-		std::string result = (rand() % 2) ? "HEADS" : "TAILS";
-		
-		if (args.size() > 0) {
-			std::string channel_name = args[0];
-			std::map<std::string, Channel>::iterator it = channels.find(channel_name);
-			if (it != channels.end()) {
-				Channel &channel = it->second;
-				const std::vector<User *> &channel_users = channel.get_users();
-				std::string flip_message = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@FT_IRC PRIVMSG " + channel_name + " :" + result + "\r\n";
-				for (size_t i = 0; i < channel_users.size(); ++i) {
-					send(channel_users[i]->get_fd(), flip_message.c_str(), flip_message.size(), 0);
-				}
-			} else {
-				user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
-			}
-		} else {
-			std::string flip_message = "Flipped " + result + "\r\n";
-			send(user.get_fd(), flip_message.c_str(), flip_message.size(), 0);
-		}
-	}
 	else
 		user.send_reply(ERR_UNKNOWNCOMMAND(cmd));
 }

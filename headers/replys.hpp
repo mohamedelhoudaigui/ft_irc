@@ -1,12 +1,10 @@
-#ifndef REPLYS_HPP
-#define REPLYS_HPP
+#pragma once
 
 #include "utils.hpp"
 
 #define POSTFIX "\r\n"
 
 //Errors :
-
 #define ERR_NOSUCHNICK(nick) ": 401 " + nick + " :No such nick/channel" POSTFIX 
 #define ERR_NOSUCHCHANNEL(channel) ": 403 " + channel + " :No such channel" POSTFIX 
 #define ERR_NORECIPIENT(nickname, command) ": 411 " + nickname + " :No recipient given (" + command + ")" + POSTFIX
@@ -44,5 +42,3 @@
 #define RPL_CHANNELMODEIS(hostname, channel, mode) ":" + hostname + " MODE " + channel + " " + mode + POSTFIX
 #define RPL_BROADTOPIC(nickname, channel, topic) ":" + nickname + " TOPIC " + channel + " :" + topic + POSTFIX
 #define RPL_NICKCHANGE(old_nick, user_name, new_nick) ":" + old_nick + "!" + user_name + "@FT_IRC NICK :" + new_nick + POSTFIX
-
-#endif
