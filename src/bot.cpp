@@ -1,7 +1,7 @@
 #include "../headers/bot.hpp"
 
 void print_usage(void) {
-    std::cerr << "usage: " << "./ircbot <server_address> <port> <password>" << std::endl;
+    std::cerr << "usage: " << "./ircbot server_address port password" << std::endl;
 }
 
 Bot::Bot(const std::string& server, int port, const std::string& password)
@@ -147,6 +147,25 @@ void Bot::run() {
     }
 }
 
+void    valid_password(std::string password)
+{
+    if (password.size() < 4 || password.size() > 20)
+    {
+        std::cerr << "password must be between 4 and 20 charcters, only alphanumeric" << std::endl;
+        exit(1);
+    }
+
+    for (size_t i = 0; i < password.size(); ++i)
+    {
+        if (!isalnum(password[i]))
+        {
+            std::cerr << "password must be between 4 and 20 charcters, only alphanumeric" << std::endl;
+            exit(1);
+        }
+    }
+}
+
+
 int main(int argc, char* argv[]) {
     if (argc != 4) {
         print_usage();
@@ -154,6 +173,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::string server_address = argv[1];
+    valid_password(argv[2]);
     long portCheck = std::atol(argv[2]);
     if (portCheck <= 0 || portCheck > 65535) {
         std::cerr << "Error: Port number must be between 1 and 65535" << std::endl;
