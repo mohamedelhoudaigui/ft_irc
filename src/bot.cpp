@@ -1,4 +1,5 @@
 #include "../headers/bot.hpp"
+#include <iostream>
 
 void print_usage(void) {
     std::cerr << "usage: " << "./ircbot <server_address> <port> <password>" << std::endl;
@@ -24,10 +25,11 @@ void Bot::connect_to_server() {
 
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
     server_addr.sin_port = htons(port);
     
-    // if (server_address == "localhost")
-    //     server_address = "127.0.0.1";
+    if (server_address == "localhost")
+        server_address = "127.0.0.1";
     if (inet_pton(AF_INET, server_address.c_str(), &server_addr.sin_addr) <= 0) {
         throw std::runtime_error("Invalid address");
     }
@@ -96,18 +98,22 @@ void Bot::handle_server_response() {
         }
         else if (line.find("PRIVMSG") != std::string::npos) {
             size_t nick_end = line.find('!');
-            if (nick_end == std::string::npos) continue;
+            if (nick_end == std::string::npos)
+                continue ;
             
             std::string sender = line.substr(1, nick_end - 1);
             size_t channel_start = line.find('#');
-            if (channel_start == std::string::npos) continue;
+            if (channel_start == std::string::npos)
+                continue ;
             
             size_t channel_end = line.find(' ', channel_start);
-            if (channel_end == std::string::npos) continue;
+            if (channel_end == std::string::npos)
+                continue ;
             
             std::string channel = line.substr(channel_start, channel_end - channel_start);
             size_t msg_start = line.find(':', channel_end);
-            if (msg_start == std::string::npos) continue;
+            if (msg_start == std::string::npos)
+                continue ;
             
             std::string message = line.substr(msg_start + 1);
             
@@ -156,9 +162,9 @@ int main(int argc, char* argv[]) {
     }
     int port = static_cast<int>(portCheck);
     std::string password = argv[3];
-    Bot bot(server_address, port, password);
 
     try {
+        Bot bot(server_address, port, password);
         bot.run();
     }
     catch (const std::runtime_error& e) {
