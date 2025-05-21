@@ -16,12 +16,12 @@ static bool is_all_numeric(const std::string& str)
 
 int	parse_port(std::string port)
 {
-	if (!port.empty() && port.size() <= 5 && is_all_numeric(port))
+	if (!port.empty() && is_all_numeric(port))
 	{
 		std::stringstream s(port);
 		int result;
 		s >> result;
-		if (result <= MAX_PORT)
+		if (result <= MAX_PORT && result > 0)
 			return (result);
 	}
 
