@@ -1,18 +1,11 @@
-#ifndef BOT_HPP
-#define BOT_HPP
-
-#include <string>
-#include <vector>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#pragma once
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <iostream>
 #include <cstring>
 #include <poll.h>
 #include <sstream>
 #include <cstdlib>
-#include <ctime>
+#include <iostream>
 
 class Bot {
 private:
@@ -47,5 +40,3 @@ std::string to_string(const T& value) {
     ss << value;
     return ss.str();
 }
-
-#endif 

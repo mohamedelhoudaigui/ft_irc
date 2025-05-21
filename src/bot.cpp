@@ -1,8 +1,4 @@
 #include "../headers/bot.hpp"
-#include <sstream>
-#include <cstdlib>
-#include <ctime>
-#include <iostream>
 
 void print_usage(void) {
     std::cerr << "usage: " << "./ircbot <server_address> <port> <password>" << std::endl;
@@ -30,6 +26,8 @@ void Bot::connect_to_server() {
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
     
+    // if (server_address == "localhost")
+    //     server_address = "127.0.0.1";
     if (inet_pton(AF_INET, server_address.c_str(), &server_addr.sin_addr) <= 0) {
         throw std::runtime_error("Invalid address");
     }
@@ -158,9 +156,9 @@ int main(int argc, char* argv[]) {
     }
     int port = static_cast<int>(portCheck);
     std::string password = argv[3];
+    Bot bot(server_address, port, password);
 
     try {
-        Bot bot(server_address, port, password);
         bot.run();
     }
     catch (const std::runtime_error& e) {

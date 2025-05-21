@@ -859,17 +859,6 @@ void Channel::apply_modes(const std::string &mode_string, const std::vector<std:
 			User *target = parser.find_user_by_nickname(*this, params[param_index]);
 			if (target)
 				set_operators_mode(adding, target);
-			// const std::vector<User *> &users = get_users();
-			// std::string names_list;
-			// for (size_t j = 0; j < users.size(); ++j) {
-			// 	if (j > 0)
-			// 		names_list += " ";
-			// 	names_list += users[j]->get_displayed_nick(*this, users[j]);
-			// }
-			// for (size_t j = 0; j < users.size(); ++j) {
-			// 	users[j]->send_reply(RPL_NAMREPLY(users[j]->get_nick_name(), "#" + get_name(), names_list));
-			// 	users[j]->send_reply(RPL_ENDOFNAMES(users[j]->get_nick_name(), "#" + get_name()));
-			// }
 			param_index++;
 		}
 		else if (c == 'l')
@@ -899,7 +888,7 @@ void Channel::apply_modes(const std::string &mode_string, const std::vector<std:
 void Parser::handleModeCommand(User* user, std::vector<std::string>& args)
 {
 	if (args.size() < 1) {
-		user->send_reply(ERR_NEEDMOREPARAMS("MODE"));
+		user->send_reply(ERR_NEEDMOREPARAMS(std::string("MODE")));
 		return;
 	}
 	const std::string& target = args[0];

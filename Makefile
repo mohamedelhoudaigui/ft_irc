@@ -17,10 +17,9 @@ HEADERS = ./headers/server.hpp \
 BONUS_HEADERS = ./headers/bot.hpp
 
 OBJ_DIR = objects
-BONUS_OBJ_DIR = objects_bonus
 
 OBJS = $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(SRCS))
-BONUS_OBJS = $(patsubst %.cpp, $(BONUS_OBJ_DIR)/%.o, $(BONUS_SRCS))
+BONUS_OBJS = $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(BONUS_SRCS))
 
 CC = c++
 
@@ -40,7 +39,7 @@ $(OBJ_DIR)/%.o: %.cpp $(HEADERS)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-bonus: all $(BONUS_NAME)
+bonus: $(BONUS_NAME)
 
 $(BONUS_NAME): $(BONUS_OBJS)
 	$(CC) $(CFLAGS) -o $(BONUS_NAME) $(BONUS_OBJS)
@@ -51,7 +50,6 @@ $(BONUS_OBJ_DIR)/%.o: %.cpp $(BONUS_HEADERS)
 
 clean:
 	$(RM) -r $(OBJ_DIR)
-	$(RM) -r $(BONUS_OBJ_DIR)
 
 fclean: clean
 	$(RM) $(NAME) $(BONUS_NAME)
