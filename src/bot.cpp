@@ -1,13 +1,13 @@
 #include "../headers/bot.hpp"
 
 void print_usage(void) {
-    std::cerr << "usage: " << "./ircbot server_address port password" << std::endl;
+    std::cerr << "usage: " << "./ircbot server_address port password [channel]" << std::endl;
 }
 
-Bot::Bot(const std::string& server, int port, const std::string& password)
+Bot::Bot(const std::string& server, int port, const std::string& password, const std::string& channel)
     : sockfd(0), server_address(server), port(port),
-      nickname("Gambabot"), username("gambabot"), realname("Dice Rolling Bot"),
-      channel(""), server_password(password) {
+      nickname("Gamba"), username("GambaBot"), realname("Gambling Bot"),
+      channel(channel), server_password(password) {
     srand(time(NULL));
 }
 
@@ -52,7 +52,7 @@ void Bot::authenticate() {
 }
 
 void Bot::join_channel() {
-    std::string join_msg = "JOIN #bot\r\n";
+    std::string join_msg = "JOIN " + channel + "\r\n";
     send_message(join_msg);
 }
 
@@ -167,7 +167,7 @@ void    valid_password(std::string password)
 
 
 int main(int argc, char* argv[]) {
-    if (argc != 4) {
+    if (argc != 4 && argc != 5) {
         print_usage();
         return 1;
     }
@@ -181,13 +181,19 @@ int main(int argc, char* argv[]) {
     }
     int port = static_cast<int>(portCheck);
     std::string password = argv[3];
+    std::string channel = (argc == 5) ? argv[4] : "#gambling";
+    std::cout << "GambaBot has joined: " << channel << std::endl;
+    std::cout << "Do /join #" << channel << " to gamble to your heart's content" << std::endl;
+    std::cout << "Available games: " << std::endl;
+    std::cout << "!roll : Roll 2 six sided dices" << std::endl;
+    std::cout << "!flip : Flip a coin" << std::endl;
 
     try {
-        Bot bot(server_address, port, password);
+        Bot bot(server_address, port, password, channel);
         bot.run();
     }
     catch (const std::exception& e) {
-        std::cerr << "Connection error: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }
     return 0;

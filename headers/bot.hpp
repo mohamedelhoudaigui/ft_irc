@@ -7,6 +7,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <iostream>
+#include <iomanip>
 
 class Bot {
 private:
@@ -30,7 +31,7 @@ private:
     void handle_flip_command(const std::string& sender, const std::string& channel);
 
 public:
-    Bot(const std::string& server, int port, const std::string& password);
+    Bot(const std::string& server, int port, const std::string& password, const std::string& channel);
     ~Bot();
     void run();
 };
