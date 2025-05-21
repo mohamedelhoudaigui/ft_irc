@@ -49,6 +49,24 @@ bool	valid_nick_name(std::string s)
 	return (true);
 }
 
+void    valid_password(std::string password)
+{
+    if (password.size() < 4 || password.size() > 20)
+    {
+        std::cerr << "password must be between 4 and 20 charcters, only alphanumeric" << std::endl;
+        exit(1);
+    }
+
+    for (size_t i = 0; i < password.size(); ++i)
+    {
+        if (!isalnum(password[i]))
+        {
+            std::cerr << "password must be between 4 and 20 charcters, only alphanumeric" << std::endl;
+            exit(1);
+        }
+    }
+}
+
 std::string	get_now_time()
 {
 	time_t rawtime;

@@ -48,6 +48,7 @@ int main (int ac, char **av)
 	}
 
 	signals_handler();
+    valid_password(av[2]);
 	Server a(parse_port(av[1]), av[2]);
 	a.start();
 	a.poll_loop();
