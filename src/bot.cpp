@@ -171,9 +171,8 @@ int main(int argc, char* argv[]) {
         print_usage();
         return 1;
     }
-
     std::string server_address = argv[1];
-    valid_password(argv[2]);
+    valid_password(argv[3]);
     long portCheck = std::atol(argv[2]);
     if (portCheck <= 0 || portCheck > 65535) {
         std::cerr << "Error: Port number must be between 1 and 65535" << std::endl;
@@ -182,8 +181,14 @@ int main(int argc, char* argv[]) {
     int port = static_cast<int>(portCheck);
     std::string password = argv[3];
     std::string channel = (argc == 5) ? argv[4] : "#gambling";
-    std::cout << "GambaBot has joined: " << channel << std::endl;
-    std::cout << "Do /join #" << channel << " to gamble to your heart's content" << std::endl;
+    if (channel[0] == '#'){
+        std::cout << "GambaBot has joined: " << channel << std::endl;
+        std::cout << "Do /join " << channel << " to gamble to your heart's content" << std::endl;
+    }
+    else{
+        std::cout << "GambaBot has joined: #" << channel << std::endl;
+        std::cout << "Do /join #" << channel << " to gamble to your heart's content" << std::endl;
+    }
     std::cout << "Available games: " << std::endl;
     std::cout << "!roll : Roll 2 six sided dices" << std::endl;
     std::cout << "!flip : Flip a coin" << std::endl;
