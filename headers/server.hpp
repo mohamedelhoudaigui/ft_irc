@@ -1,24 +1,8 @@
 #pragma once
 
-#include <sys/socket.h>
-#include <poll.h>
-#include <netinet/in.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cerrno>
-#include <string>
-#include <cstdlib>
-#include <iostream>
-#include <errno.h>
-#include <vector>
-
+#include "includes.hpp"
 #include "parser.hpp"
 
-#define MAX_EVENTS 500
 
 class Server
 {

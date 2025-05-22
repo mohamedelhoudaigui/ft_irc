@@ -1,13 +1,12 @@
 #pragma once
 
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <cstring>
 #include <poll.h>
 #include <sstream>
+#include <cstring>
 #include <cstdlib>
 #include <iostream>
-#include <iomanip>
+#include <unistd.h>
+#include <arpa/inet.h>
 
 class Bot {
 private:

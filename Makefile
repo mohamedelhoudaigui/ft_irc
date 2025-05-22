@@ -7,7 +7,8 @@ SRCS = ./src/server.cpp \
 
 BONUS_SRCS = ./src/bot.cpp
 
-HEADERS = ./headers/server.hpp \
+HEADERS = 	./headers/includes.hpp \
+			./headers/server.hpp \
 			./headers/utils.hpp \
 			./headers/parser.hpp \
 			./headers/replys.hpp \

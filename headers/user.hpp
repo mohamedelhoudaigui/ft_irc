@@ -1,16 +1,8 @@
 #pragma once
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <string>
-#include <iostream>
-#include <stdio.h>
-
+#include "includes.hpp"
 #include "replys.hpp"
 #include "channels.hpp"
-#define BUFFER_SIZE 512
 
 class User
 {

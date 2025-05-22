@@ -1,13 +1,6 @@
 #pragma once
 
-#include <string>
-#include <algorithm>
-#include <sstream>
-#include <iostream>
-#include <ctime>
-#include <cctype>
-
-#define MAX_PORT 65535
+#include "includes.hpp"
 
 int         parse_port(std::string port);
 std::string convert_to_lower(std::string s);

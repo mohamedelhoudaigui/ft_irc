@@ -1,8 +1,7 @@
 #pragma once
 
+#include "includes.hpp"
 #include "utils.hpp"
-
-#define POSTFIX "\r\n"
 
 //Errors :
 #define ERR_NOSUCHNICK(nick) ": 401 " + nick + " :No such nick/channel" POSTFIX 

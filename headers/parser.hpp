@@ -1,26 +1,11 @@
 #pragma once
 
-#include <poll.h>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <stdexcept>
-#include <algorithm>
-#include <cstring>
-#include <iostream>
-#include <stdio.h>
-#include <errno.h>
-#include <cerrno>
-#include <map>
-
+#include "includes.hpp"
 #include "user.hpp"
 #include "replys.hpp"
 #include "utils.hpp"
 
 class Server;
-
-#define BUFFER_SIZE 512
-
 class Channel;
 
 class   cmd_line
