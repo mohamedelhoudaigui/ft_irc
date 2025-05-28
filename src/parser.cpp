@@ -648,7 +648,7 @@ void Parser::privmsg(std::string receiver, std::string msg, User &user)
 			if (sender)
 			{
 				const std::vector<User *> &channel_users = channel.get_users();
-				std::string formatted_msg = ":" + user.get_displayed_nick(channel, &user) + "!" + user.get_user_name() + "@" + user.get_ip_address() + " PRIVMSG " + receiver + " :" + msg + "\r\n";
+				std::string formatted_msg = ":" + user.get_nick_name() + "!" + user.get_user_name() + "@" + user.get_ip_address() + " PRIVMSG " + receiver + " :" + msg + "\r\n";
 				for (size_t i = 0; i < channel_users.size(); ++i)
 				{
 					User *target = channel_users[i];
@@ -657,7 +657,7 @@ void Parser::privmsg(std::string receiver, std::string msg, User &user)
 				}
 			}
 			else
-				user.send_reply(ERR_NOTONCHANNEL(user.get_displayed_nick(channel, &user), channel.get_name()));
+				user.send_reply(ERR_NOTONCHANNEL(user.get_nick_name(), channel.get_name()));
 		}
 		else
 			user.send_reply(ERR_NOSUCHCHANNEL(receiver));
@@ -680,9 +680,30 @@ void Parser::privmsg(std::string receiver, std::string msg, User &user)
 	}
 }
 
+void Parser::send_mode_update(User *user, Channel& channel, char adding, char mode, std::string param, bool check) {
+	std::string mode_message = RPL_BROADMODE(user->get_nick_name(), channel.get_name(), adding,  mode, param);
+    const std::vector<User*>& channel_users = channel.get_users();
+    for (size_t i = 0; i < channel_users.size(); i++) {
+            channel_users[i]->send_reply(mode_message);
+    }
+	if (check)
+	{
+		const std::vector<User *> &current_users = channel.get_users();
+		std::string names_list;
+		for (size_t j = 0; j < current_users.size(); j++) {
+			if (j > 0)
+				names_list += " ";
+			if (channel.is_operator(current_users[j]))
+				names_list += "@";
+			names_list += current_users[j]->get_nick_name();
+		}
+		user->send_reply(RPL_NAMREPLY(user->get_nick_name(), channel.get_name(), names_list));
+		user->send_reply(RPL_ENDOFNAMES(user->get_nick_name(), channel.get_name()));
+	}
+}
 
 void Parser::send_topic_update(User& user, Channel& channel, std::string& channel_name) {
-	std::string topic_message = RPL_BROADTOPIC(user.get_displayed_nick(channel, &user), channel_name, channel.get_topic());
+	std::string topic_message = RPL_BROADTOPIC(user.get_nick_name(), channel_name, channel.get_topic());
     const std::vector<User*>& channel_users = channel.get_users();
     for (size_t i = 0; i < channel_users.size(); i++) {
             channel_users[i]->send_reply(topic_message);
@@ -700,13 +721,13 @@ void Parser::topic_command(std::string channel_name, std::string new_topic, User
         bool user_in_channel = false;
 
         for (size_t i = 0; i < channel_users.size(); i++) {
-            if (channel_users[i]->get_displayed_nick(channel, &user) == user.get_displayed_nick(channel, &user)) {
+            if (channel_users[i]->get_nick_name() == user.get_nick_name()) {
                 user_in_channel = true;
                 break;
             }
         }
         if (!user_in_channel) {
-            user.send_reply(ERR_NOTONCHANNEL(user.get_displayed_nick(channel, &user), channel_name));
+            user.send_reply(ERR_NOTONCHANNEL(user.get_nick_name(), channel_name));
         }
 		else {
             if (!new_topic.empty()) {
@@ -715,22 +736,22 @@ void Parser::topic_command(std::string channel_name, std::string new_topic, User
                     return;
                 }
                 if (new_topic == ":") {
-                    channel.set_topic("", user.get_displayed_nick(channel, &user));
+                    channel.set_topic("", user.get_nick_name());
                 } else if (istrail) {
-                    channel.set_topic(new_topic.substr(1), user.get_displayed_nick(channel, &user));
+                    channel.set_topic(new_topic.substr(1), user.get_nick_name());
                 } else {
-					channel.set_topic(new_topic, user.get_displayed_nick(channel, &user)); 
+					channel.set_topic(new_topic, user.get_nick_name()); 
 				}
-                user.send_reply(RPL_TOPIC(user.get_displayed_nick(channel, &user), channel_name, channel.get_topic()));
-                user.send_reply(RPL_TOPICWHOTIME(user.get_displayed_nick(channel, &user), channel_name, channel.get_topic_author(), channel.get_topic_time()));
+                user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, channel.get_topic()));
+                user.send_reply(RPL_TOPICWHOTIME(user.get_nick_name(), channel_name, channel.get_topic_author(), channel.get_topic_time()));
                 send_topic_update(user, channel, channel_name);
             }
 			else
 			{
 				if ((channel.get_topic().empty()))
-					user.send_reply(RPL_NOTOPIC(user.get_displayed_nick(channel, &user), channel_name));
+					user.send_reply(RPL_NOTOPIC(user.get_nick_name(), channel_name));
 				else
-					user.send_reply(RPL_TOPIC(user.get_displayed_nick(channel, &user), channel_name, channel.get_topic()));
+					user.send_reply(RPL_TOPIC(user.get_nick_name(), channel_name, channel.get_topic()));
 			}
         }
     }
@@ -778,25 +799,40 @@ void Channel::apply_modes(const std::string &mode_string, const std::vector<std:
 		else if (c == 'i')
 		{
 			set_mode(c, adding);
-			if (adding)
+			if (adding){
 				is_invite_only = true;
-			else
+				parser.send_mode_update(user, channel, '+' , c, "", false);
+			}
+			else{
 				is_invite_only = false;
+				parser.send_mode_update(user, channel, '-', c, "", false);
+			}
 		}
-		else if (c == 't')
+		else if (c == 't'){
 			set_mode(c, adding);
+			char a;
+			if (adding)
+				a = '+';
+			else
+				a = '-';
+			parser.send_mode_update(user, channel, a, c, "", false);
+		}
 		else if (c == 'k')
 		{
 			if (adding)
 			{
 				if (param_index >= params.size())
 					break;
+				if (params[param_index].empty())
+					user->send_reply(ERR_NOKEYTOSET());
 				set_key_mode(params[param_index], true);
+				parser.send_mode_update(user, channel, '+', c, params[param_index], false);
 				param_index++;
 			}
 			else
 			{
 				set_key_mode("", false);
+				parser.send_mode_update(user, channel, '-', c, "", false);
 			}
 		}
 		else if (c == 'o')
@@ -804,8 +840,15 @@ void Channel::apply_modes(const std::string &mode_string, const std::vector<std:
 			if (param_index >= params.size())
 				break;
 			User *target = parser.find_user_by_nickname(*this, params[param_index]);
-			if (target)
+			if (target && target != user){
 				set_operators_mode(adding, target);
+				char a;
+				if (adding)
+					a = '+';
+				else
+					a = '-';
+				parser.send_mode_update(user, channel, a, c, params[param_index], true);
+			}
 			param_index++;
 		}
 		else if (c == 'l')
@@ -813,13 +856,19 @@ void Channel::apply_modes(const std::string &mode_string, const std::vector<std:
 			if (adding)
 			{
 				if (param_index >= params.size()) break;
+		
 				unsigned long limit = strtoul(params[param_index].c_str(), NULL, 10);
+				if (params[param_index][0] == '-')
+					limit = 0;
 				set_user_limits(true, limit);
+				if (limit > 0 && limit <= INT_MAX)
+					parser.send_mode_update(user, channel, '+', c, params[param_index], false);
 				param_index++;
 			}
 			else
 			{
 				set_user_limits(false, 0);
+				parser.send_mode_update(user, channel, '-', c, "", false);
 			}
 		}
 		else

@@ -51,7 +51,6 @@ class User
 
 		void			send_reply(std::string reply);
 		
-		std::string		get_displayed_nick(Channel &channel, User *user);
 		private:
 			int				fd;
 			std::string		ip_address;

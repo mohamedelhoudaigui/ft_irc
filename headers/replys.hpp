@@ -18,6 +18,7 @@
 #define ERR_ALREADYREGISTERED(target) ": 462 " + target + " :You may not reregister" POSTFIX 
 #define ERR_PASSWDMISMATCH(target) ": 464 " + target + " :Password incorrect" POSTFIX 
 #define ERR_CHANOPRIVSNEEDED(channel) ": 482 " + channel + " :You're not channel operator" POSTFIX
+#define ERR_NOKEYTOSET() " :No key to set" POSTFIX
 #define ERR_CHANNELISFULL(client, channel) ": 471 " + client + " " + channel + " :Cannot join channel (+l)" POSTFIX
 #define ERR_INVITEONLYCHAN(client, channel) ": 473 " + client + " " + channel + " :Cannot join channel (+i)" POSTFIX
 #define ERR_BADCHANNELKEY(nickname, channel)": 475 " + nickname + " " + channel + " :Cannot join channel (+k)" + POSTFIX
@@ -40,4 +41,5 @@
 #define RPL_JOIN(sender, channel) ":" + sender + " JOIN :" + channel + POSTFIX
 #define RPL_CHANNELMODEIS(hostname, channel, mode) ":" + hostname + " MODE " + channel + " " + mode + POSTFIX
 #define RPL_BROADTOPIC(nickname, channel, topic) ":" + nickname + " TOPIC " + channel + " :" + topic + POSTFIX
+#define RPL_BROADMODE(nickname, channel, adding, mode, param) ":" + nickname + " MODE " + channel + " :" + adding + mode + " " +  param + POSTFIX
 #define RPL_NICKCHANGE(old_nick, user_name, new_nick) ":" + old_nick + "!" + user_name + "@FT_IRC NICK :" + new_nick + POSTFIX

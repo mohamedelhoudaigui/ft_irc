@@ -1,6 +1,7 @@
 #include "../headers/server.hpp"
 #include "../headers/parser.hpp"
-
+#include <fcntl.h>
+#include <libc.h>
 // canonical form :
 
 Server::Server() {}

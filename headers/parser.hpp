@@ -46,6 +46,7 @@ class Parser
             void            handleModeCommand(User* user, std::vector<std::string>& args);
             void	        topic_command(std::string channel_name, std::string new_topic, User& user, bool istrail);
 
+            void            send_mode_update(User *user, Channel& channel, char adding, char mode, std::string param, bool check);
 
             User*           find_user_by_nickname(Channel &channel,const std::string nickname);
             User*           find_invited_user(const std::string nickname);
