@@ -605,6 +605,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 							send(channel_users[i]->get_fd(), kick_message.c_str(), kick_message.size(), 0);
 						}
 						channel.remove_user(selected_user);
+						if (channel.is_operator(selected_user))
+							channel.remove_operator(selected_user);
 						std::cout << "User " << kicked << " removed from channel " << channel_name << std::endl;
 					}
 					else
