@@ -18,7 +18,7 @@
 #define ERR_ALREADYREGISTERED(target) ": 462 " + target + " :You may not reregister" POSTFIX 
 #define ERR_PASSWDMISMATCH(target) ": 464 " + target + " :Password incorrect" POSTFIX 
 #define ERR_CHANOPRIVSNEEDED(channel) ": 482 " + channel + " :You're not channel operator" POSTFIX
-#define ERR_NOKEYTOSET() " :No key to set" POSTFIX
+#define ERR_NOKEYTOSET() ": No key to set" POSTFIX
 #define ERR_CHANNELISFULL(client, channel) ": 471 " + client + " " + channel + " :Cannot join channel (+l)" POSTFIX
 #define ERR_INVITEONLYCHAN(client, channel) ": 473 " + client + " " + channel + " :Cannot join channel (+i)" POSTFIX
 #define ERR_BADCHANNELKEY(nickname, channel)": 475 " + nickname + " " + channel + " :Cannot join channel (+k)" + POSTFIX
@@ -31,7 +31,7 @@
 #define RPL_UMODEIS(nickname, modes) ": 221 " + nickname + " :" + modes + POSTFIX
 #define RPL_NOTOPIC(sender, channel) ": 331 " + sender + " " + channel + " :No topic is set" + POSTFIX
 #define RPL_TOPIC(sender, channel, topic) ": 332 " + sender + " " + channel + " :" + topic + POSTFIX    
-#define RPL_TOPICWHOTIME(nick, channel, setter, time)  "333 " + nick + " " + channel + " " + setter + " " + to_string(time) + POSTFIX
+#define RPL_TOPICWHOTIME(nick, channel, setter, time)  ": 333 " + nick + " " + channel + " " + setter + " " + to_string(time) + POSTFIX
 #define RPL_INVITING(nickname, targnick, targchan) ": 341 " + nickname + " " + targnick + " " + targchan + POSTFIX
 #define RPL_NAMREPLY(sender, channel, users) ": 353 " + sender + " = " + channel + " :" + users + POSTFIX
 #define RPL_ENDOFNAMES(sender, channel) ": 366 " + sender + " " + channel + " :End of /NAMES list." POSTFIX
@@ -43,3 +43,4 @@
 #define RPL_BROADTOPIC(nickname, channel, topic) ":" + nickname + " TOPIC " + channel + " :" + topic + POSTFIX
 #define RPL_BROADMODE(nickname, channel, adding, mode, param) ":" + nickname + " MODE " + channel + " :" + adding + mode + " " +  param + POSTFIX
 #define RPL_NICKCHANGE(old_nick, user_name, new_nick) ":" + old_nick + "!" + user_name + "@FT_IRC NICK :" + new_nick + POSTFIX
+#define RPL_MODEOPERATOR(nickname, channel, adding, param) ":" + nickname + "!" + nickname + "@" + nickname + " MODE " + channel + " " + adding + "o" + " " +  param + POSTFIX

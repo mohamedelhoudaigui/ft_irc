@@ -486,6 +486,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 					}
 					if (!userAlreadyInChannel) {
 						existing_channel.add_user(&user);
+						user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
 					}
 				}
 				else {
@@ -495,9 +496,9 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 					channel_ref.set_name(channel_name.substr(1));
 					channel_ref.add_user(&user);
 					channel_ref.set_operators_mode(true, &user);
+					user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
 				}
 
-				user.send_reply(RPL_JOIN(user.get_nick_name(), channel_name));
 				if (!userAlreadyInChannel) {
 					Channel *existing_channel = &channels[channel_name];
 					if (existing_channel == NULL) {
@@ -594,6 +595,8 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 						return;
 					}
 					User *selected_user = find_user_by_nickname(it->second, kicked);
+					if (selected_user && selected_user == &user)
+						return ;
 					if (selected_user) {
 						std::string kick_message = ":" + user.get_nick_name() + "!" + user.get_user_name() 
 						+ "@FT_IRC KICK " + channel_name + " " + kicked + " :" + reason + "\r\n";
@@ -681,11 +684,6 @@ void Parser::privmsg(std::string receiver, std::string msg, User &user)
 }
 
 void Parser::send_mode_update(User *user, Channel& channel, char adding, char mode, std::string param, bool check) {
-	std::string mode_message = RPL_BROADMODE(user->get_nick_name(), channel.get_name(), adding,  mode, param);
-    const std::vector<User*>& channel_users = channel.get_users();
-    for (size_t i = 0; i < channel_users.size(); i++) {
-            channel_users[i]->send_reply(mode_message);
-    }
 	if (check)
 	{
 		const std::vector<User *> &current_users = channel.get_users();
@@ -697,8 +695,17 @@ void Parser::send_mode_update(User *user, Channel& channel, char adding, char mo
 				names_list += "@";
 			names_list += current_users[j]->get_nick_name();
 		}
-		user->send_reply(RPL_NAMREPLY(user->get_nick_name(), channel.get_name(), names_list));
-		user->send_reply(RPL_ENDOFNAMES(user->get_nick_name(), channel.get_name()));
+		std::string mode_message = RPL_MODEOPERATOR(user->get_nick_name(), channel.get_name(), adding, param);
+		const std::vector<User*>& channel_users = channel.get_users();
+		for (size_t i = 0; i < channel_users.size(); i++) {
+				channel_users[i]->send_reply(mode_message);
+		}
+	} else {
+		std::string mode_message = RPL_BROADMODE(user->get_nick_name(), channel.get_name(), adding,  mode, param);
+		const std::vector<User*>& channel_users = channel.get_users();
+		for (size_t i = 0; i < channel_users.size(); i++) {
+				channel_users[i]->send_reply(mode_message);
+		}
 	}
 }
 
@@ -826,7 +833,7 @@ void Channel::apply_modes(const std::string &mode_string, const std::vector<std:
 				if (params[param_index].empty())
 					user->send_reply(ERR_NOKEYTOSET());
 				set_key_mode(params[param_index], true);
-				parser.send_mode_update(user, channel, '+', c, params[param_index], false);
+				parser.send_mode_update(user, channel, '+', c, "", false);
 				param_index++;
 			}
 			else
