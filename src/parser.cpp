@@ -309,7 +309,10 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		else if (user.get_auth() == true)
 			user.send_reply(ERR_ALREADYREGISTERED(user.get_nick_name()));
 		else if (args[0] != server_password)
+		{
 			user.send_reply(ERR_PASSWDMISMATCH(user.get_nick_name()));
+			user.set_pass_step(false);
+		}
 		else
 		{
 			if (!user.get_auth())
@@ -949,4 +952,3 @@ std::ostream& operator<<(std::ostream& os, const cmd_line& c)
 
     return os;
 }
-
