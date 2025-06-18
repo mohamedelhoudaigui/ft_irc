@@ -750,7 +750,7 @@ void Parser::topic_command(std::string channel_name, std::string new_topic, User
                 if (new_topic == ":") {
                     channel.set_topic("", user.get_nick_name());
                 } else if (istrail) {
-                    channel.set_topic(new_topic.substr(1), user.get_nick_name());
+                    channel.set_topic(new_topic, user.get_nick_name());
                 } else {
 					channel.set_topic(new_topic, user.get_nick_name()); 
 				}
