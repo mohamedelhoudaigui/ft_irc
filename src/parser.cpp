@@ -583,7 +583,7 @@ void	Parser::redirect_cmd(User & user, cmd_line & c)
 		else {
 			std::string channel_name = args[0];
 			std::string kicked = args[1];
-			std::string reason = trailing.empty() ? "Kicked by " + user.get_nick_name() : trailing.substr(1);
+			std::string reason = trailing.empty() ? "Kicked by " + user.get_nick_name() : trailing;
 	
 			if (channel_name[0] != '#')
 				user.send_reply(ERR_NOSUCHCHANNEL(channel_name));
